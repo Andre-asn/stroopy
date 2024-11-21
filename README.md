@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A web-based 1v1 Stroop Test game that challenges players to quickly and accurately respond to color-word matching challenges. The game tests players' cognitive processing speed and ability to overcome cognitive interference.
+A web-based 1v1 Stroop Test game inspired by the minigame in "The Outlast Trials" that challenges players to quickly and accurately respond to color-word matching challenges. The game tests players' cognitive processing speed and ability to overcome cognitive interference.
 
 ### Game Concept
 
