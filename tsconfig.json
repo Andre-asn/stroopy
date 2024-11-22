@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "moduleResolution": "node",
     // Required for importing 3rd-party dependencies like EventEmitter3
     "esModuleInterop": true
