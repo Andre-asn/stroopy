@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-const ScrollingBackground = React.memo(() => {
+const MenuBackground = React.memo(() => {
     const Words = [
         "White", "Black", "Red", "Green", "Blue", 
         "Yellow", "Orange", "Purple", "Brown", 
@@ -23,7 +23,7 @@ const ScrollingBackground = React.memo(() => {
             rows.push(
                 <div 
                     key={`row-${i}`}
-                    className="absolute w-full overflow-hidden"
+                    className="min-h-screen bg-black absolute w-full overflow-hidden"
                     style={{ top: verticalPosition }}
                 >
                     <div className={`flex whitespace-nowrap ${isReverse ? 'animate-scroll' : 'animate-scrollReverse'}`}>
@@ -49,4 +49,4 @@ const ScrollingBackground = React.memo(() => {
     );
 });
 
-export default ScrollingBackground;
+export default MenuBackground;

@@ -5,7 +5,7 @@ export const COLORS = {
     YELLOW: '#EAB308',
     PURPLE: '#A855F7',
     ORANGE: '#F97316',
-    BROWN: '#A0522D',
+    WHITE: '#FFFFFF',
   };
   
   export const COLOR_NAMES = Object.keys(COLORS);
@@ -21,31 +21,27 @@ export const COLORS = {
   } | null;
   
   export const generateNewRound = () => {
-    // Select random word and color for the target
     const word = getRandomColor();
     let displayColor;
     do {
       displayColor = getRandomColor();
     } while (displayColor === word);
   
-    // Keep track of used colors to prevent duplicates
     const usedColors = new Set([displayColor]);
   
-    // Create array with the correct answer first
     let correctOptionColor;
     do {
       correctOptionColor = getRandomColor();
-    } while (correctOptionColor === displayColor || correctOptionColor === word); // Ensure the color isn't the same as the word
+    } while (correctOptionColor === displayColor || correctOptionColor === word);
   
     const options: { word: string; color: string }[] = [
       {
-        word: displayColor, // The word should be the target color (correct answer)
-        color: correctOptionColor // This can be any color except the word's actual color
+        word: displayColor, 
+        color: correctOptionColor 
       }
     ];
     usedColors.add(correctOptionColor);
   
-    // Add two random incorrect options
     while (options.length < 3) {
       let newWord: string, newColor: string;
       
@@ -55,7 +51,7 @@ export const COLORS = {
           newColor = getRandomColor();
         } while (
           usedColors.has(newColor) || 
-          newColor === newWord // Ensure the color isn't the same as the word
+          newColor === newWord
         );
       } while (
         newWord === displayColor || 
@@ -69,7 +65,6 @@ export const COLORS = {
       usedColors.add(newColor);
     }
   
-    // Rest of the function remains the same
     const shuffledOptions = options.sort(() => Math.random() - 0.5);
   
     const positions = Array.from({ length: 9 }, (_, i) => i);

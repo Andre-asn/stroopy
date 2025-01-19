@@ -1,9 +1,9 @@
 import { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import ScrollingBackground from './scrollingBackground';
+import MenuBackground from '../components/menuBackground';
 
-const HomePage = () => {
+const Home = () => {
     const navigate = useNavigate();
     const [titleColor, setTitleColor] = useState('#FFFFFF');
 
@@ -18,14 +18,17 @@ const HomePage = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleStart = () => {
-        // Navigate to game route with state indicating immediate start
+    const handleSingle = () => {
         navigate('/game', { state: { autoStart: true } });
     };
 
+    const handleVersus = () => {
+        navigate('/versus');
+    }
+
     return (
         <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black">
-            <ScrollingBackground />
+            <MenuBackground />
 
             <h1
                 className="bg-black text-6xl font-bold z-10 mt-8 mb-8 p-4"
@@ -33,15 +36,24 @@ const HomePage = () => {
             >
                 Stroopy
             </h1>
+            <div className="inline-flex gap-4 z-10"> 
             <Button
-                className="z-10 text-xl bg-white text-black hover:border-green-700 hover:bg-green-700"
+                className="justify-between z-10 text-xl bg-white text-black hover:bg-green-700"
                 size="lg"
-                onClick={handleStart}
+                onClick={handleSingle}
             >
-                Start
+                Single
             </Button>
+            <Button
+                className="justify-between z-10 text-xl bg-white text-black hover:bg-orange-500"
+                size="lg"
+                onClick={handleVersus}
+            >
+                Versus
+            </Button>
+            </div>
         </div>
     );
 };
 
-export default HomePage; 
+export default Home; 

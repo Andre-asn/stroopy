@@ -9,6 +9,14 @@ module.exports = {
   theme: {
   	extend: {
       keyframes: {
+		blink: {
+			'0%, 100%': { opacity: 1 },
+			'50%': { opacity: 0 }
+		},
+		pulse: {
+		  '30%, 100%': { transform: 'scale(1)' },
+		  '50%': { transform: 'scale(1.05)' }
+		},
         scroll: {
           '0%': { transform: 'translateX(0)' },
           '100%': { transform: 'translateX(-100%)' }
@@ -20,7 +28,8 @@ module.exports = {
       },
       animation: {
         scroll: 'scroll 150s linear infinite',
-        scrollReverse: 'scrollReverse 150s linear infinite'
+        scrollReverse: 'scrollReverse 150s linear infinite',
+		blink: 'blink 1.5s infinite',
       },
   		borderRadius: {
   			lg: 'var(--radius)',

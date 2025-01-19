@@ -1,11 +1,11 @@
-// components/StroopGame.tsx
-import { useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { COLORS, generateNewRound, checkAnswer } from '../utils/gameLogic';
+import GameBackground from '../utils/gameBackground';
 
 const Game = () => {
     const { state } = useLocation();
-    const [score, setScore] = useState(0);
+    const [scoreSquares, setScoreSquares] = useState(Array(14).fill(false));
     const [targetWord, setTargetWord] = useState('');
     const [targetColor, setTargetColor] = useState<keyof typeof COLORS>('RED');
     const [buttonStates, setButtonStates] = useState<Array<{ word: string; color: string } | null>>([]);
@@ -19,16 +19,35 @@ const Game = () => {
     };
 
     const startGame = () => {
-        setScore(0);
+        setScoreSquares(Array(14).fill(false));
         setGameStarted(true);
         startNewRound();
     };
 
     const handleButtonClick = (buttonWord: string) => {
         if (checkAnswer(buttonWord, targetColor)) {
-            setScore(prev => prev + 1);
+            setScoreSquares(prev => {
+                const next = [...prev];
+                const index = next.indexOf(false);
+                if (index !== -1) next[index] = true;
+                return next;
+            })
+        } else {
+            setScoreSquares(prev => {
+                const next = [...prev];
+                const index = next.lastIndexOf(true);
+                if (index !== -1) next[index] = false;
+                return next;
+            })
         }
-        startNewRound();
+
+        if (scoreSquares.every(square => square)) {
+            setGameStarted(false);
+            alert(`Game Over! Play again?`);
+            startGame()
+        } else {
+            startNewRound();
+        }
     };
 
     useEffect(() => {
@@ -38,18 +57,23 @@ const Game = () => {
     }, []);
 
     return (
-        <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-8 gap-8">
-            <div className="text-3xl font-bold mb-8">
-                Score: {score}
-            </div>
-                    
-            <div className="text-6xl font-bold mb-16" style={{ color: COLORS[targetColor] }}>
-                {targetWord}
+        <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-8 gap-8 relative overflow-hidden">
+            <GameBackground targetWord={targetWord} targetColor={COLORS[targetColor]} />
+
+            <div className="flex gap-2 z-10">
+                {scoreSquares.map((filled, index) => (
+                    <div
+                        key={index}
+                        className={`w-8 h-8 border-2 ${
+                            filled ? 'bg-green-900 border-black' : 'bg-transparent border-gray-300'
+                        }`}
+                    />
+                ))}
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="bg-gray-700 grid grid-cols-3 gap-4 z-10">
                 {buttonStates.map((option, index) => (
-                    <button 
+                    <button
                         key={index}
                         onClick={() => option && handleButtonClick(option.word)}
                         className="aspect-square w-40 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 text-2xl font-bold"
