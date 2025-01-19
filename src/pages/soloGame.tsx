@@ -9,7 +9,7 @@ const Game = () => {
     const [targetWord, setTargetWord] = useState('');
     const [targetColor, setTargetColor] = useState<keyof typeof COLORS>('RED');
     const [buttonStates, setButtonStates] = useState<Array<{ word: string; color: string } | null>>([]);
-    const [gameStarted, setGameStarted] = useState(false);
+    const [_gameStarted, setGameStarted] = useState(false);
 
     const startNewRound = () => {
         const { targetWord, targetColor, buttonStates } = generateNewRound();
