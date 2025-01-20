@@ -27,11 +27,10 @@ const Versus = () => {
         })
     
         newSocket.on('connect_error', () => {
-            setError('Failed to connect to server')
+            setError('MULTIPLAYER UNDER DEVELOPMENT')
             setIsConnecting(false)
         })
     
-        // Just return newSocket.close() since it automatically removes all listeners
         return () => {
             newSocket.close()
         }
