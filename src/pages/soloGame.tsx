@@ -123,7 +123,7 @@ const Game = () => {
                     <button
                         key={index}
                         onClick={() => option && handleButtonClick(option.word)}
-                        className="aspect-square w-40 border-2 border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-200 text-2xl font-bold"
+                        className="aspect-square w-40 border-2 hover:border-4 border-gray-200 rounded-lg transition-all duration-200 text-2xl font-bold"
                         style={{ color: option ? COLORS[option.color as keyof typeof COLORS] : 'transparent' }}
                     >
                         {option ? option.word : ''}
