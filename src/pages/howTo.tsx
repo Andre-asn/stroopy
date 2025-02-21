@@ -44,7 +44,7 @@ const HowTo = () => {
 
                             <div className="mt-6 flex justify-center">
                                 <video 
-                                    src="src/misc/singleplayer-demo.mkv" 
+                                    src="videos/singleplayer-demo.mkv" 
                                     className="rounded-lg shadow-lg max-w-full h-auto"
                                     autoPlay
                                     loop
