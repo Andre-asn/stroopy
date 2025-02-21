@@ -7,6 +7,10 @@ const Home = () => {
     const navigate = useNavigate();
     const [titleColor, setTitleColor] = useState('#FFFFFF');
 
+    useEffect(() => {
+        document.title = "Stroopy - Stroop Effect Game"
+    })
+
     const getRandomColor = () => {
         return `#${Math.floor(Math.random()*16777215).toString(16)}`;
     };
