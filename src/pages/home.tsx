@@ -1,4 +1,4 @@
-import { useState, useEffect} from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import MenuBackground from '../components/menuBackground';
@@ -19,11 +19,15 @@ const Home = () => {
     }, []);
 
     const handleSingle = () => {
-        navigate('/game', { state: { autoStart: true } });
+        navigate('/Game', { state: { autoStart: true } });
     };
 
     const handleVersus = () => {
-        navigate('/versus');
+        navigate('/Versus');
+    }
+
+    const handleHowTo = () => {
+        navigate('/HowTo');
     }
 
     return (
@@ -51,6 +55,19 @@ const Home = () => {
             >
                 Versus
             </Button>
+            <Button
+                className="justify-between z-10 text-xl bg-white text-black hover:bg-yellow-500"
+                size="lg"
+                onClick={handleHowTo}
+            >
+                ?
+            </Button>
+            </div>
+
+            <div className="absolute bottom-14 text-center text-gray-500 text-xs z-10">
+                <p>Stroopy v0.2</p>
+                <p>Created by [Andre Santiago-Neyra]</p>
+                <p><a href="https://github.com/Andre-asn" className="hover:text-gray-300 underline" target="_blank" rel="noopener noreferrer">GitHub</a> | <a href="mailto:andresanti.asn@gmail.com" className="hover:text-gray-300 underline">Contact</a></p>
             </div>
         </div>
     );

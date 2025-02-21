@@ -99,7 +99,7 @@ const Game = () => {
                 onClick={handleBack}
                 className="absolute top-4 left-4 z-10 bg-gray-600 hover:bg-gray-700"
             >
-                Back to Menu
+                Back to Main Menu
             </Button>
 
             {/* Timer */}
