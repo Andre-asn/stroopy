@@ -52,8 +52,7 @@ const io = new Server(httpServer, {
     ],
     methods: ["GET", "POST"],
     credentials: true
-  },
-  transports: ['websocket']
+  }
 });
 
 // Store active game rooms
@@ -379,5 +378,4 @@ io.on('connection', (socket: Socket) => {
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  console.log('CORS enabled for:', io.engine.opts.cors?.origin);
 }); 
