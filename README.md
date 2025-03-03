@@ -1,62 +1,30 @@
 # Stroopy - Multiplayer Stroop Effect Game
-
 A real-time multiplayer game based on the Stroop Effect, built with React, TypeScript, and Socket.IO.
 
-## Setup
+## Project Overview
 
-1. Clone the repository
-2. Copy `.env.example` to `.env` and update the environment variables:
-   ```bash
-   cp .env.example .env
-   ```
-3. Install dependencies:
-   ```bash
-   npm install
-   ```
-4. Start the development server:
-   ```bash
-   npm run dev
-   ```
+A real-time 1v1 multiplayer game (and singleplayer) based on the Stroop Test, an experiment that challenges players to quickly and accurately respond to color-word matching tasks. The game tests players' cognitive processing speed and ability to overcome cognitive interference.
 
-## Backend Setup
+### Game Concept
 
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the server:
-   ```bash
-   npm run dev
-   ```
+The Stroop Test is a psychological test where players must quickly identify the color of a word, which may or may not match the word's text. For example:
+- The word "RED" printed in blue
+- The word "GREEN" printed in red
 
-## Deployment
+Players compete 1v1 to see who can respond most accurately and quickly.
 
-### Frontend (Vercel)
-1. Create a new project on Vercel
-2. Connect your repository
-3. Add the following environment variables in Vercel:
-   - `VITE_PROD_SERVER_URL`: Your production backend URL
+## Tech Stack (Subject to change)
+
+### Frontend
+- React / Vite
+- Typescript
+- Tailwind 
+- Socket.io Client
 
 ### Backend
-1. Deploy the backend to a hosting service (Render, Railway, etc.)
-2. Update the CORS configuration in `backend/src/server.ts` with your Vercel domain
-3. Set the production URL in your frontend environment variables
+- Node.js with Express.js
+- WebSocket (Socket.io)
 
-## Tech Stack
-
-- Frontend:
-  - React
-  - TypeScript
-  - Vite
-  - TailwindCSS
-  - Socket.IO Client
-
-- Backend:
-  - Node.js
-  - Express
-  - Socket.IO
-  - TypeScript
+### Hosting
+- Frontend: Vercel
+- Backend: Render
