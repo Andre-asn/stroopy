@@ -263,7 +263,7 @@ io.on('connection', (socket: Socket) => {
       });
 
       // Check for game winner
-      if (room.scores[socket.id] >= 5) {
+      if (room.scores[socket.id] >= 7) {
         console.log('Game over! Winner:', socket.id);
         io.to(roomCode).emit('gameOver', { 
           winnerId: socket.id,

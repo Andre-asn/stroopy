@@ -11,7 +11,7 @@ const HowTo = () => {
     };
 
     return (
-        <div className="relative min-h-screen flex items-center justify-center">
+        <div className="relative min-h-screen flex items-center justify-center p-4">
             <MenuBackground />
 
             <Button
@@ -25,7 +25,7 @@ const HowTo = () => {
                 <Tabs defaultValue="single" className="w-full">
                     <TabsList className="w-full grid grid-cols-2">
                         <TabsTrigger value="single">Single</TabsTrigger>
-                        <TabsTrigger value="versus" disabled>Versus</TabsTrigger>
+                        <TabsTrigger value="versus">Versus</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="single">
@@ -53,12 +53,45 @@ const HowTo = () => {
                                     controls={false}
                                 />
                             </div>
-                        
+                        </CardContent>
+                    </TabsContent>
+
+                    <TabsContent value="versus">
+                        <CardContent className="p-6 space-y-4">
+                            <h3 className="text-white text-2xl font-bold mb-4">How to play: Versus</h3>
+                            <p className="text-white">Challenge your friends in a 1v1 battle of reflexes and focus!</p>
+
+                            <div className="space-y-2 text-white">
+                                <p>1. Click "Versus" on the main menu</p>
+                                <p>2. Choose to either create a new room or join an existing one</p>
+                                <p>3. If creating a room, share the room code with your friend</p>
+                                <p>4. If joining, enter the room code provided by your friend</p>
+                                <p>5. Once both players join, the host can start the game</p>
+                            </div>
+
+                            <div className="mt-4 space-y-2 text-white">
+                                <p className="font-bold">Game Rules:</p>
+                                <p>• Both players see the same word and color options</p>
+                                <p>• First player to select the correct color wins the round</p>
+                                <p>• Win 7 rounds to become the champion!</p>
+                                <p>• Be careful - incorrect answers will set you back!</p>
+                            </div>
+
+                            <div className="mt-6 flex justify-center">
+                                <video 
+                                    src="videos/versus-demo.mkv" 
+                                    className="rounded-lg shadow-lg max-w-full h-auto"
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    controls={false}
+                                />
+                            </div>
                         </CardContent>
                     </TabsContent>
                 </Tabs>
             </Card>
-
         </div>
     );
 };
