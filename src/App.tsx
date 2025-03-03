@@ -4,7 +4,9 @@ import './index.css';
 import Home from './pages/home'; 
 import Game from './pages/soloGame'; 
 import Versus from './pages/versus';
+import VersusGame from './pages/versusGame';
 import HowTo from './pages/howTo';
+import GameOver from './pages/gameOver';
 
 const App: React.FC = () => {
     return (
@@ -13,6 +15,8 @@ const App: React.FC = () => {
                 <Route path="/" element={<Home />} />
                 <Route path="/game" element={<Game />} />
                 <Route path="/versus" element={<Versus />} />
+                <Route path="/versusGame" element={<VersusGame />} />
+                <Route path="/gameOver" element={<GameOver />} />
                 <Route path="/HowTo" element={<HowTo />} />
             </Routes>
         </Router>

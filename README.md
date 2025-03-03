@@ -1,33 +1,62 @@
-# Stroop Test Game
+# Stroopy - Multiplayer Stroop Effect Game
 
-## Project Overview
+A real-time multiplayer game based on the Stroop Effect, built with React, TypeScript, and Socket.IO.
 
-A web-based 1v1 Stroop Test game inspired by the minigame in "The Outlast Trials" that challenges players to quickly and accurately respond to color-word matching challenges. The game tests players' cognitive processing speed and ability to overcome cognitive interference.
+## Setup
 
-### Game Concept
+1. Clone the repository
+2. Copy `.env.example` to `.env` and update the environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-The Stroop Test is a psychological test where players must quickly identify the color of a word, which may or may not match the word's text. For example:
-- The word "RED" printed in blue
-- The word "GREEN" printed in red
+## Backend Setup
 
-Players compete 1v1 to see who can respond most accurately and quickly.
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the server:
+   ```bash
+   npm run dev
+   ```
 
-## Tech Stack (Subject to change)
+## Deployment
 
-### Frontend
-- React.js / Next.js
-- Tailwind CSS
-- State Management: Redux or Context API
+### Frontend (Vercel)
+1. Create a new project on Vercel
+2. Connect your repository
+3. Add the following environment variables in Vercel:
+   - `VITE_PROD_SERVER_URL`: Your production backend URL
 
 ### Backend
-- Node.js with Express.js
-- WebSocket (Socket.io) for real-time communication
-- Firebase Auth
+1. Deploy the backend to a hosting service (Render, Railway, etc.)
+2. Update the CORS configuration in `backend/src/server.ts` with your Vercel domain
+3. Set the production URL in your frontend environment variables
 
-### Database
-- MongoDB or PostgreSQL
+## Tech Stack
 
-### Hosting
-- Frontend: Vercel
-- Backend: Heroku or DigitalOcean
-- Database: MongoDB Atlas
+- Frontend:
+  - React
+  - TypeScript
+  - Vite
+  - TailwindCSS
+  - Socket.IO Client
+
+- Backend:
+  - Node.js
+  - Express
+  - Socket.IO
+  - TypeScript

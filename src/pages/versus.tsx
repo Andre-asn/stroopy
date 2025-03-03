@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input"
 import { io, Socket } from 'socket.io-client'
+import { getSocketUrl } from '../utils/socket'
 
 const Versus = () => {
 	const navigate = useNavigate();
@@ -19,25 +20,43 @@ const Versus = () => {
 
     useEffect(() => {
         setIsConnecting(true)
-        const newSocket = io(import.meta.env.VITE_SERVER_URL)
+        setError(null)
+        
+        console.log('Attempting to connect to:', getSocketUrl())
+        
+        const newSocket = io(getSocketUrl(), {
+            transports: ['websocket'],
+            timeout: 10000,
+            reconnection: true,
+            reconnectionAttempts: 3
+        })
         
         newSocket.on('connect', () => {
+            console.log('Socket connected successfully')
             setIsConnecting(false)
             setSocket(newSocket)
+            setError(null)
         })
     
-        newSocket.on('connect_error', () => {
-            setError('MULTIPLAYER UNDER DEVELOPMENT')
+        newSocket.on('connect_error', (err) => {
+            console.error('Socket connection error:', err)
+            setError(`Connection error: ${err.message}`)
             setIsConnecting(false)
+        })
+
+        newSocket.on('error', (err) => {
+            console.error('Socket error:', err)
+            setError(`Socket error: ${err.message}`)
         })
     
         return () => {
+            console.log('Cleaning up socket connection')
             newSocket.close()
         }
     }, [])
 
     useEffect(() => {
-        if (!socket) return
+        if (!socket) return;
 
         socket.on('roomCreated', ({ roomCode }) => {
             setLobbyCode(roomCode)
@@ -57,12 +76,22 @@ const Versus = () => {
         })
 
         socket.on('gameStart', () => {
+            console.log('Game starting, navigating to game...');
             navigate('/versusGame', {
                 state: {
                     roomCode: lobbyCode,
-                    isHost: isHost,
+                    isHost: isHost
                 }
             });
+            socket.off('connect');
+            socket.off('connect_error');
+            socket.off('error');
+            socket.off('roomCreated');
+            socket.off('joinError');
+            socket.off('playerJoined');
+            socket.off('gameStart');
+            socket.off('playerDisconnected');
+            socket.off('playerLeft');
         });
 
         socket.on('playerDisconnected', () => {
@@ -136,9 +165,10 @@ const Versus = () => {
     }
 
     const handleReady = () => {
-        if (!socket || !lobbyCode ) return
-        setIsReady(true)
-        socket.emit('playerReady', { roomCode: lobbyCode })
+        if (!socket || !lobbyCode) return;
+        console.log('Sending playerReady event');
+        setIsReady(true);
+        socket.emit('playerReady', { roomCode: lobbyCode });
     }
 
     return (
