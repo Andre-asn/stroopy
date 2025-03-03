@@ -35,43 +35,39 @@ const Home = () => {
     }
 
     return (
-        <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black">
+        <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
             <MenuBackground />
+            
+            <div className="z-10 bg-black/80 p-4 sm:p-8 rounded-lg flex flex-col items-center gap-3 sm:gap-6 w-full max-w-sm sm:max-w-md">
+                <h1 
+                    className="text-3xl sm:text-5xl font-bold text-center mb-4 sm:mb-8 transition-colors duration-1000"
+                    style={{ color: titleColor }}
+                >
+                    Stroopy
+                </h1>
 
-            <h1
-                className="bg-black text-6xl font-bold z-10 mt-8 mb-8 p-4"
-                style={{ color: titleColor, transition: "color 3s ease" }}
-            >
-                Stroopy
-            </h1>
-            <div className="inline-flex gap-4 z-10"> 
-            <Button
-                className="justify-between z-10 text-xl bg-white text-black hover:bg-green-700"
-                size="lg"
-                onClick={handleSingle}
-            >
-                Single
-            </Button>
-            <Button
-                className="justify-between z-10 text-xl bg-white text-black hover:bg-orange-500"
-                size="lg"
-                onClick={handleVersus}
-            >
-                Versus
-            </Button>
-            <Button
-                className="justify-between z-10 text-xl bg-white text-black hover:bg-yellow-500"
-                size="lg"
-                onClick={handleHowTo}
-            >
-                ?
-            </Button>
-            </div>
+                <div className="flex flex-col gap-3 sm:gap-4 w-full">
+                    <Button
+                        onClick={handleSingle}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-sm sm:text-base"
+                    >
+                        Single Player
+                    </Button>
 
-            <div className="absolute bottom-14 text-center text-gray-500 text-xs z-10">
-                <p>Stroopy v0.4</p>
-                <p>Created by [Andre Santiago-Neyra]</p>
-                <p><a href="https://github.com/Andre-asn" className="hover:text-gray-300 underline" target="_blank" rel="noopener noreferrer">GitHub</a> | <a href="mailto:andresanti.asn@gmail.com" className="hover:text-gray-300 underline">Contact</a></p>
+                    <Button
+                        onClick={handleVersus}
+                        className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base"
+                    >
+                        Versus Mode
+                    </Button>
+
+                    <Button
+                        onClick={handleHowTo}
+                        className="w-full bg-gray-600 hover:bg-gray-700 text-sm sm:text-base"
+                    >
+                        How to Play
+                    </Button>
+                </div>
             </div>
         </div>
     );

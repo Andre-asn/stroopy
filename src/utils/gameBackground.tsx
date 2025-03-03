@@ -24,7 +24,7 @@ const GameBackground: React.FC<GameBackgroundProps> = ({ targetWord, targetColor
                 {rowWords.map((word, index) => (
                     <span
                         key={`${i}-${index}`}
-                        className="mx-4 text-4xl font-semibold text-opacity-20 select-none animate-pulse"
+                        className="mx-1 sm:mx-4 text-xl sm:text-4xl font-semibold text-opacity-20 select-none animate-pulse"
                     >
                         {word}
                     </span>
