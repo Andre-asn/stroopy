@@ -74,7 +74,7 @@ const HowTo = () => {
                                 <p>• Both players see the same word and color options</p>
                                 <p>• First player to select the correct color wins the round</p>
                                 <p>• Win 7 rounds to become the champion!</p>
-                                <p>• Be careful - incorrect answers will set you back!</p>
+                                <p>• Incorrect answers don't set you back - keep trying!</p>
                             </div>
 
                             <div className="mt-6 flex justify-center">
