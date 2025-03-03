@@ -141,7 +141,7 @@ const VersusGame = () => {
     }
 
     return (
-        <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-8 gap-8 relative overflow-hidden">
+        <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 gap-4 sm:gap-8 relative overflow-hidden">
             <GameBackground 
                 targetWord={gameState.targetWord} 
                 targetColor={gameState.targetColor} 
@@ -149,28 +149,28 @@ const VersusGame = () => {
 
             <Button
                 onClick={handleBack}
-                className="absolute top-4 left-4 z-10 bg-gray-600 hover:bg-gray-700"
+                className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10 bg-gray-600 hover:bg-gray-700 text-sm sm:text-base"
             >
                 Leave Game
             </Button>
 
-            <div className="absolute top-4 right-4 z-10 bg-gray-800 px-4 py-2 rounded-lg flex gap-4">
-                <span className="text-white text-xl font-mono">You: {myScore}</span>
-                <span className="text-white text-xl font-mono">Opponent: {opponentScore}</span>
+            <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-gray-800 px-2 sm:px-4 py-1 sm:py-2 rounded-lg flex gap-2 sm:gap-4">
+                <span className="text-white text-sm sm:text-xl font-mono">You: {myScore}</span>
+                <span className="text-white text-sm sm:text-xl font-mono">Opponent: {opponentScore}</span>
             </div>
 
             {roundResult && (
-                <div className="absolute top-20 right-4 z-10 bg-gray-800 px-4 py-2 rounded-lg">
-                    <span className="text-white text-xl">{roundResult}</span>
+                <div className="absolute top-16 sm:top-20 right-2 sm:right-4 z-10 bg-gray-800 px-2 sm:px-4 py-1 sm:py-2 rounded-lg">
+                    <span className="text-white text-sm sm:text-xl">{roundResult}</span>
                 </div>
             )}
 
-            <div className="bg-gray-700 grid grid-cols-3 gap-4 z-10">
+            <div className="bg-gray-700 grid grid-cols-3 gap-2 sm:gap-4 z-10">
                 {gameState.buttonStates.map((option, index) => (
                     <button
                         key={index}
                         onClick={() => option && handleButtonClick(option.word)}
-                        className="aspect-square w-40 border-2 hover:border-4 border-gray-200 rounded-lg transition-all duration-200 text-2xl font-bold"
+                        className="aspect-square w-24 sm:w-40 border-2 hover:border-4 border-gray-200 rounded-lg transition-all duration-200 text-lg sm:text-2xl font-bold"
                         style={{ color: option ? COLORS[option.color as keyof typeof COLORS] : 'transparent' }}
                         disabled={!isRoundActive}
                     >

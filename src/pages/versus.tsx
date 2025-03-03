@@ -173,18 +173,18 @@ const Versus = () => {
 
     return (
         <>
-            <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black">
+            <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
                 <MenuBackground />
 
                 <Button
                     onClick={handleBack}
-                    className="absolute top-4 left-4 z-10 bg-gray-600 hover:bg-gray-700"
+                    className="absolute top-2 sm:top-4 left-2 sm:left-4 z-10 bg-gray-600 hover:bg-gray-700 text-sm sm:text-base"
                 >
                     Back to Main Menu
                 </Button>
 
-                <div className="z-10 bg-black/80 p-8 rounded-lg flex flex-col gap-6 w-96">
-                    <h2 className="text-white text-2xl fond-bold text-center mb-4">
+                <div className="z-10 bg-black/80 p-4 sm:p-8 rounded-lg flex flex-col gap-4 sm:gap-6 w-full max-w-sm sm:max-w-md">
+                    <h2 className="text-white text-xl sm:text-2xl font-bold text-center mb-2 sm:mb-4">
                         Versus Mode
                     </h2>
 
@@ -193,32 +193,32 @@ const Versus = () => {
                     ) : (
                         <>
                             <div className="flex flex-col gap-2">
-                                <label className="text-white">Username:</label>
+                                <label className="text-white text-sm sm:text-base">Username:</label>
                                 <Input
                                     type="text"
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     placeholder="Enter your username"
-                                    className="bg-white text-black"
+                                    className="bg-white text-black text-sm sm:text-base"
                                 />
                             </div>
 
                             {(isHost || lobbyCode) ? (
-                                <div className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-3 sm:gap-4">
                                     <div className="text-center">
-                                        <p className="text-white mb-2">Your Lobby Code:</p>
-                                        <p className="text-2xl font-bold text-yellow-400">{lobbyCode}</p>
-                                        <p className="text-gray-400 text-sm mt-2">
+                                        <p className="text-white mb-1 sm:mb-2 text-sm sm:text-base">Your Lobby Code:</p>
+                                        <p className="text-xl sm:text-2xl font-bold text-yellow-400">{lobbyCode}</p>
+                                        <p className="text-gray-400 text-xs sm:text-sm mt-1 sm:mt-2">
                                             {isHost ? 'Share this code with your friend' : 'Connected to lobby'}
                                         </p>
                                     </div>
 
                                     {opponent && (
                                         <div className="text-center">
-                                            <p className="text-white">
+                                            <p className="text-white text-sm sm:text-base">
                                                 {isHost ? 'Opponent' : 'Host'}: {opponent}
                                             </p>
-                                            {isReady && <p className="text-green-500">You are ready!</p>}
+                                            {isReady && <p className="text-green-500 text-sm sm:text-base">You are ready!</p>}
                                         </div>
                                     )}
 
@@ -226,28 +226,28 @@ const Versus = () => {
                                         {opponent && !isReady && (
                                             <Button
                                                 onClick={handleReady}
-                                                className="bg-blue-600 hover:bg-blue-700"
+                                                className="bg-blue-600 hover:bg-blue-700 text-sm sm:text-base"
                                             >
                                                 Ready
                                             </Button>
                                         )}
                                         {!isReady && opponent && (
-                                            <p className="text-white mt-2">Waiting for players to ready up...</p>
+                                            <p className="text-white mt-2 text-sm sm:text-base">Waiting for players to ready up...</p>
                                         )}
                                     </div>
 
                                     <Button 
                                         onClick={handleLeaveLobby}
-                                        className="bg-red-600 hover:bg-red-700"
+                                        className="bg-red-600 hover:bg-red-700 text-sm sm:text-base"
                                     >
                                         Leave Lobby
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="flex flex-col gap-4">
+                                <div className="flex flex-col gap-3 sm:gap-4">
                                     <Button
                                         onClick={handleLobbyCreation}
-                                        className="bg-green-600 hover:bg-green-700"
+                                        className="bg-green-600 hover:bg-green-700 text-sm sm:text-base"
                                     >
                                         Create Lobby
                                     </Button>
@@ -258,11 +258,11 @@ const Versus = () => {
                                             value={joinCode}
                                             onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                                             placeholder="Enter lobby code"
-                                            className="bg-white text-black"
+                                            className="bg-white text-black text-sm sm:text-base"
                                         />
                                         <Button
                                             onClick={handleJoinLobby}
-                                            className="bg-blue-600 hover:bg-blue-700"
+                                            className="bg-blue-600 hover:bg-blue-700 text-sm sm:text-base"
                                         >
                                             Join Lobby
                                         </Button>
@@ -271,7 +271,7 @@ const Versus = () => {
                             )}
                             
                             {error && (
-                                <div className="text-red-500 text-center mt-4">
+                                <div className="text-red-500 text-center mt-2 sm:mt-4 text-sm sm:text-base">
                                     <p>{error}</p>
                                 </div>
                             )}
