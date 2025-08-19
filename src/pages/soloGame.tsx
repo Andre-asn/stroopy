@@ -13,13 +13,18 @@ const Game = () => {
     const [buttonStates, setButtonStates] = useState<Array<{ word: string; color: string } | null>>([]);
     const [time, setTime] = useState(0);
     const [isActive, setIsActive] = useState(false);
+    const [showingFeedback, setShowingFeedback] = useState(false);
+    const [feedbackType, setFeedbackType] = useState<'correct' | 'incorrect' | null>(null);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const startNewRound = () => {
         const { targetWord, targetColor, buttonStates } = generateNewRound();
         setTargetWord(targetWord);
         setTargetColor(targetColor as keyof typeof COLORS);
         setButtonStates(buttonStates);
+        setShowingFeedback(false);
+        setFeedbackType(null);
     };
 
     const startGame = () => {
@@ -33,32 +38,76 @@ const Game = () => {
         if (timerRef.current) {
             clearInterval(timerRef.current);
         }
+        if (feedbackTimeoutRef.current) {
+            clearTimeout(feedbackTimeoutRef.current);
+        }
         navigate('/');
     };
 
+    const showFeedback = (isCorrect: boolean, gameEnded: boolean = false) => {
+        setShowingFeedback(true);
+        setFeedbackType(isCorrect ? 'correct' : 'incorrect');
+        
+        // Clear any existing timeout
+        if (feedbackTimeoutRef.current) {
+            clearTimeout(feedbackTimeoutRef.current);
+        }
+        
+        // Show feedback for 2 seconds, then continue
+        feedbackTimeoutRef.current = setTimeout(() => {
+            if (!gameEnded) {
+                startNewRound();
+            }
+        }, 2000);
+    };
+
     const handleButtonClick = (buttonWord: string) => {
-        if (checkAnswer(buttonWord, targetColor)) {
+        // Don't allow clicks during feedback
+        if (showingFeedback) return;
+        
+        const isCorrect = checkAnswer(buttonWord, targetColor);
+        
+        if (isCorrect) {
+            // Correct answer
             setScoreSquares(prev => {
                 const next = [...prev];
                 const index = next.indexOf(false);
                 if (index !== -1) next[index] = true;
+                
+                // Check win condition with the UPDATED array
+                if (next.every(square => square)) {
+                    // All squares filled - game won!
+                    setIsActive(false);
+                    showFeedback(true, true); // Show success feedback
+                    
+                    // Navigate to game over page after feedback
+                    setTimeout(() => {
+                        navigate('/gameOver', {
+                            state: {
+                                gameMode: 'singleplayer',
+                                completionTime: time,
+                                isWinner: true
+                            }
+                        });
+                    }, 2000);
+                } else {
+                    // Continue playing - show feedback then new round
+                    showFeedback(true, false);
+                }
+                
                 return next;
-            })
+            });
         } else {
+            // Wrong answer - move backward
             setScoreSquares(prev => {
                 const next = [...prev];
                 const index = next.lastIndexOf(true);
                 if (index !== -1) next[index] = false;
                 return next;
-            })
-        }
-
-        if (scoreSquares.every(square => square)) {
-            setIsActive(false);
-            alert(`Game Over! Time: ${formatTime(time)}\nPlay again?`);
-            startGame();
-        } else {
-            startNewRound();
+            });
+            
+            // Show feedback then new round
+            showFeedback(false, false);
         }
     };
 
@@ -75,7 +124,7 @@ const Game = () => {
     }, []);
 
     useEffect(() => {
-        if (isActive) {
+        if (isActive && !showingFeedback) {
             timerRef.current = setInterval(() => {
                 setTime(prevTime => prevTime + 1);
             }, 1000);
@@ -88,11 +137,26 @@ const Game = () => {
                 clearInterval(timerRef.current);
             }
         };
-    }, [isActive]);
+    }, [isActive, showingFeedback]);
+
+    // Cleanup timeouts on unmount
+    useEffect(() => {
+        return () => {
+            if (feedbackTimeoutRef.current) {
+                clearTimeout(feedbackTimeoutRef.current);
+            }
+        };
+    }, []);
 
     return (
         <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 gap-4 sm:gap-8 relative overflow-hidden">
-            <GameBackground targetWord={targetWord} targetColor={COLORS[targetColor]} />
+            {/* FIXED: Now passing the feedback props correctly */}
+            <GameBackground 
+                targetWord={showingFeedback ? '' : targetWord} 
+                targetColor={showingFeedback ? '#000000' : COLORS[targetColor]} 
+                showingFeedback={showingFeedback}
+                feedbackType={feedbackType}
+            />
 
             {/* Back Button */}
             <Button
@@ -107,6 +171,7 @@ const Game = () => {
                 <span className="text-white text-sm sm:text-xl font-mono">{formatTime(time)}</span>
             </div>
 
+            {/* Score squares - no feedback symbols */}
             <div className="flex gap-1 sm:gap-2 z-10">
                 {scoreSquares.map((filled, index) => (
                     <div
@@ -118,15 +183,31 @@ const Game = () => {
                 ))}
             </div>
 
+            {/* Button grid with feedback */}
             <div className="bg-gray-700 grid grid-cols-3 gap-2 sm:gap-4 z-10">
                 {buttonStates.map((option, index) => (
                     <button
                         key={index}
                         onClick={() => option && handleButtonClick(option.word)}
-                        className="aspect-square w-24 sm:w-40 border-2 hover:border-4 border-gray-200 rounded-lg transition-all duration-200 text-lg sm:text-2xl font-bold"
-                        style={{ color: option ? COLORS[option.color as keyof typeof COLORS] : 'transparent' }}
+                        disabled={showingFeedback}
+                        className={`aspect-square w-24 sm:w-40 border-2 hover:border-4 border-gray-200 rounded-lg transition-all duration-200 text-lg sm:text-2xl font-bold flex items-center justify-center ${
+                            showingFeedback ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        style={{ 
+                            color: option && !showingFeedback 
+                                ? COLORS[option.color as keyof typeof COLORS] 
+                                : 'transparent' 
+                        }}
                     >
-                        {option ? option.word : ''}
+                        {showingFeedback ? (
+                            <span className={`text-4xl sm:text-6xl font-bold ${
+                                feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                                {feedbackType === 'correct' ? '✓' : '✗'}
+                            </span>
+                        ) : (
+                            option ? option.word : ''
+                        )}
                     </button>
                 ))}
             </div>

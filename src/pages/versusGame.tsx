@@ -12,6 +12,11 @@ interface GameState {
     buttonStates: Array<{ word: string; color: string } | null>;
 }
 
+interface RoundFeedback {
+    type: 'correct' | 'incorrect' | 'too_slow';
+    message: string;
+}
+
 const VersusGame = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -23,6 +28,11 @@ const VersusGame = () => {
     const [opponentScore, setOpponentScore] = useState(0);
     const [roundResult, setRoundResult] = useState<string | null>(null);
     const [isRoundActive, setIsRoundActive] = useState(true);
+    
+    // New feedback states
+    const [showingFeedback, setShowingFeedback] = useState(false);
+    const [feedbackType, setFeedbackType] = useState<'correct' | 'incorrect' | null>(null);
+    const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
 
     // Connect to socket
     useEffect(() => {
@@ -38,7 +48,6 @@ const VersusGame = () => {
         newSocket.on('connect', () => {
             console.log('Socket connected, joining game room:', roomCode);
             setSocket(newSocket);
-            // Join the game room
             newSocket.emit('joinGame', { roomCode });
         });
 
@@ -63,20 +72,43 @@ const VersusGame = () => {
             setGameState(newGameState);
             setRoundResult(null);
             setIsRoundActive(true);
+            // Reset feedback
+            setShowingFeedback(false);
+            setFeedbackType(null);
+            setFeedbackMessage(null);
         });
 
-        socket.on('roundResult', ({ winner, scores }: { winner: string, scores: { [key: string]: number } }) => {
-            console.log('Round result:', { winner, scores });
-            setRoundResult(winner === socket.id ? 'You got the point!' : 'Opponent got the point!');
+        // New feedback event handler
+        socket.on('roundFeedback', (feedback: RoundFeedback) => {
+            console.log('Received feedback:', feedback);
+            setShowingFeedback(true);
+            setFeedbackMessage(feedback.message);
             
-            // Update scores directly from the scores object
+            if (feedback.type === 'correct') {
+                setFeedbackType('correct');
+            } else {
+                setFeedbackType('incorrect'); // Both 'incorrect' and 'too_slow' show X
+            }
+            
+            // Disable further input
+            setIsRoundActive(false);
+        });
+
+        socket.on('roundResult', ({ winner, scores }: { winner: string | null, scores: { [key: string]: number } }) => {
+            console.log('Round result:', { winner, scores });
+            
+            if (winner) {
+                setRoundResult(winner === socket.id ? 'You got the point!' : 'Opponent got the point!');
+            } else {
+                setRoundResult('No one got the point!');
+            }
+            
+            // Update scores
             if (socket.id) {
                 setMyScore(scores[socket.id] || 0);
-                // Get opponent's score by finding the other score in the object
                 const opponentScore = Object.entries(scores).find(([id]) => id !== socket.id)?.[1] || 0;
                 setOpponentScore(opponentScore);
             }
-            setIsRoundActive(false);
         });
 
         socket.on('gameOver', ({ winnerId, finalScores }: { winnerId: string, finalScores: { [key: string]: number } }) => {
@@ -102,6 +134,7 @@ const VersusGame = () => {
 
         return () => {
             socket.off('roundStart');
+            socket.off('roundFeedback'); // New cleanup
             socket.off('roundResult');
             socket.off('gameOver');
             socket.off('playerLeft');
@@ -116,7 +149,7 @@ const VersusGame = () => {
     };
 
     const handleButtonClick = (buttonWord: string) => {
-        if (!socket || !gameState || !isRoundActive) return;
+        if (!socket || !gameState || !isRoundActive || showingFeedback) return;
 
         console.log('Sending answer:', {
             answer: buttonWord,
@@ -142,9 +175,12 @@ const VersusGame = () => {
 
     return (
         <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 gap-4 sm:gap-8 relative overflow-hidden">
+            {/* Enhanced GameBackground with feedback support */}
             <GameBackground 
-                targetWord={gameState.targetWord} 
-                targetColor={gameState.targetColor} 
+                targetWord={showingFeedback ? '' : gameState.targetWord} 
+                targetColor={showingFeedback ? '#000000' : gameState.targetColor}
+                showingFeedback={showingFeedback}
+                feedbackType={feedbackType}
             />
 
             <Button
@@ -159,22 +195,49 @@ const VersusGame = () => {
                 <span className="text-white text-sm sm:text-xl font-mono">Opponent: {opponentScore}</span>
             </div>
 
-            {roundResult && (
+            {/* Feedback message display */}
+            {feedbackMessage && (
                 <div className="absolute top-16 sm:top-20 right-2 sm:right-4 z-10 bg-gray-800 px-2 sm:px-4 py-1 sm:py-2 rounded-lg">
+                    <span className={`text-sm sm:text-xl font-bold ${
+                        feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'
+                    }`}>
+                        {feedbackMessage}
+                    </span>
+                </div>
+            )}
+
+            {/* Round result (shown after feedback) */}
+            {roundResult && !showingFeedback && (
+                <div className="absolute top-24 sm:top-28 right-2 sm:right-4 z-10 bg-gray-800 px-2 sm:px-4 py-1 sm:py-2 rounded-lg">
                     <span className="text-white text-sm sm:text-xl">{roundResult}</span>
                 </div>
             )}
 
+            {/* Enhanced button grid with feedback */}
             <div className="bg-gray-700 grid grid-cols-3 gap-2 sm:gap-4 z-10">
                 {gameState.buttonStates.map((option, index) => (
                     <button
                         key={index}
                         onClick={() => option && handleButtonClick(option.word)}
-                        className="aspect-square w-24 sm:w-40 border-2 hover:border-4 border-gray-200 rounded-lg transition-all duration-200 text-lg sm:text-2xl font-bold"
-                        style={{ color: option ? COLORS[option.color as keyof typeof COLORS] : 'transparent' }}
-                        disabled={!isRoundActive}
+                        disabled={!isRoundActive || showingFeedback}
+                        className={`aspect-square w-24 sm:w-40 border-2 hover:border-4 border-gray-200 rounded-lg transition-all duration-200 text-lg sm:text-2xl font-bold flex items-center justify-center ${
+                            showingFeedback || !isRoundActive ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        style={{ 
+                            color: option && !showingFeedback 
+                                ? COLORS[option.color as keyof typeof COLORS] 
+                                : 'transparent' 
+                        }}
                     >
-                        {option ? option.word : ''}
+                        {showingFeedback ? (
+                            <span className={`text-4xl sm:text-6xl font-bold ${
+                                feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                                {feedbackType === 'correct' ? '✓' : '✗'}
+                            </span>
+                        ) : (
+                            option ? option.word : ''
+                        )}
                     </button>
                 ))}
             </div>
@@ -182,4 +245,4 @@ const VersusGame = () => {
     );
 };
 
-export default VersusGame; 
+export default VersusGame;

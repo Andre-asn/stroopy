@@ -5,7 +5,14 @@ import { useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { getSocketUrl } from '../utils/socket';
 
-interface GameOverState {
+interface SingleplayerState {
+    gameMode: 'singleplayer';
+    completionTime: number;
+    isWinner: true;
+}
+
+interface MultiplayerState {
+    gameMode?: 'multiplayer';
     isWinner: boolean;
     myScore: number;
     opponentScore: number;
@@ -13,50 +20,114 @@ interface GameOverState {
     isHost: boolean;
 }
 
+type GameOverState = SingleplayerState | MultiplayerState;
+
 const GameOver = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const state = location.state as GameOverState;
 
     useEffect(() => {
-        if (!state) {
-            navigate('/versus');
-            return;
+        // Only handle multiplayer socket logic
+        if (state && state.gameMode !== 'singleplayer') {
+            const multiplayerState = state as MultiplayerState;
+            if (!multiplayerState.roomCode) {
+                navigate('/versus');
+                return;
+            }
+
+            const socket = io(getSocketUrl(), {
+                transports: ['websocket'],
+                query: { isHost: multiplayerState.isHost ? 'true' : 'false' }
+            });
+
+            socket.on('connect', () => {
+                socket.emit('joinGameOver', { roomCode: multiplayerState.roomCode });
+            });
+
+            return () => {
+                socket.disconnect();
+            };
         }
-
-        const socket = io(getSocketUrl(), {
-            transports: ['websocket'],
-            query: { isHost: state.isHost ? 'true' : 'false' }
-        });
-
-        socket.on('connect', () => {
-            socket.emit('joinGameOver', { roomCode: state.roomCode });
-        });
-
-        return () => {
-            socket.disconnect();
-        };
     }, [state, navigate]);
 
-    const handleBackToMenu = () => {
-        navigate('/versus');
+    const formatTime = (timeInSeconds: number) => {
+        const minutes = Math.floor(timeInSeconds / 60);
+        const seconds = timeInSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
 
-    if (!state) return null;
+    const handlePlayAgain = () => {
+        navigate('/game', { state: { autoStart: true } });
+    };
 
+    const handleBackToMenu = () => {
+        if (state?.gameMode === 'singleplayer') {
+            navigate('/');
+        } else {
+            navigate('/versus');
+        }
+    };
+
+    // Handle case where no state is passed
+    if (!state) {
+        navigate('/');
+        return null;
+    }
+
+    // Singleplayer Game Over
+    if (state.gameMode === 'singleplayer') {
+        return (
+            <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
+                <MenuBackground />
+                
+                <div className="z-10 bg-black/80 p-4 sm:p-8 rounded-lg flex flex-col items-center gap-4 sm:gap-6 w-full max-w-sm sm:max-w-md border border-red-500">
+                    <h1 className="italic text-3xl sm:text-4xl font-bold text-red-400 mb-2 sm:mb-4">
+                        Game Over!
+                    </h1>
+
+                    <div className="text-center text-white mb-4 sm:mb-6">
+                        <div className="text-2xl sm:text-3xl font-bold text-green-400">
+                            {formatTime(state.completionTime)}
+                        </div>
+                        <p className="text-sm text-gray-400 mt-1">Your completion time</p>
+                    </div>
+
+                    <div className="flex flex-col gap-3 sm:gap-4 w-full">
+                        <Button
+                            onClick={handlePlayAgain}
+                            className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base font-bold"
+                        >
+                            Play Again
+                        </Button>
+                        
+                        <Button
+                            onClick={handleBackToMenu}
+                            className="w-full bg-gray-600 hover:bg-gray-700 text-sm sm:text-base"
+                        >
+                            Back to Main Menu
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Multiplayer Game Over (existing logic)
+    const multiplayerState = state as MultiplayerState;
     return (
         <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
             <MenuBackground />
             
             <div className="z-10 bg-black/80 p-4 sm:p-8 rounded-lg flex flex-col items-center gap-4 sm:gap-6 w-full max-w-sm sm:max-w-md">
                 <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 sm:mb-4">
-                    {state.isWinner ? 'Victory!' : 'Defeat!'}
+                    {multiplayerState.isWinner ? '🏆 Victory!' : '💔 Defeat!'}
                 </h1>
 
                 <div className="text-lg sm:text-xl text-white mb-4 sm:mb-6">
                     <p>Final Score</p>
-                    <p className="mt-2">You: {state.myScore}</p>
-                    <p>Opponent: {state.opponentScore}</p>
+                    <p className="mt-2">You: {multiplayerState.myScore}</p>
+                    <p>Opponent: {multiplayerState.opponentScore}</p>
                 </div>
 
                 <div className="flex flex-col gap-3 sm:gap-4 w-full">
@@ -72,4 +143,4 @@ const GameOver = () => {
     );
 };
 
-export default GameOver; 
+export default GameOver;

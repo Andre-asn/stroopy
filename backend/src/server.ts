@@ -4,23 +4,30 @@ import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 
 interface GameRoom {
-  host: string;
-  hostSocket: string;
-  guest?: string;
-  guestSocket?: string;
-  readyPlayers: Set<string>;
-  // Game state
-  scores: {
-    [key: string]: number;
-  };
-  currentRound?: {
-    targetWord: string;
-    targetColor: string;
-    buttonStates: Array<{ word: string; color: string } | null>;
-  };
-  inGame: boolean;
-  rematchRequested?: boolean;
-}
+    host: string;
+    hostSocket: string;
+    guest?: string;
+    guestSocket?: string;
+    readyPlayers: Set<string>;
+    // Game state
+    scores: {
+      [key: string]: number;
+    };
+    currentRound?: {
+      targetWord: string;
+      targetColor: string;
+      buttonStates: Array<{ word: string; color: string } | null>;
+      playerAnswers?: {
+        [socketId: string]: {
+          answer: string;
+          isCorrect: boolean;
+          timestamp: number;
+        };
+      };
+    };
+    inGame: boolean;
+    rematchRequested?: boolean;
+  }
 
 const COLORS = {
   RED: '#EF4444',
@@ -234,53 +241,154 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  // Handle player answer
+  // Handle player answer with new competitive logic
   socket.on('playerAnswer', ({ roomCode, answer, targetColor }) => {
     console.log('Received answer:', { roomCode, answer, targetColor });
     const room = gameRooms.get(roomCode);
     if (!room || !room.currentRound) return;
 
-    console.log('Current round state:', room.currentRound);
-    console.log('Current scores before update:', room.scores);
+    // Check if this player already answered this round
+    if (room.currentRound.playerAnswers && room.currentRound.playerAnswers[socket.id]) {
+      console.log('Player already answered this round');
+      return;
+    }
 
-    // The correct answer is the word that matches the target color
-    if (answer.toUpperCase() === targetColor.toUpperCase()) {
-      console.log('Correct answer!');
-      // Player got it right
+    // Initialize playerAnswers if not exists
+    if (!room.currentRound.playerAnswers) {
+      room.currentRound.playerAnswers = {};
+    }
+
+    const isCorrect = answer.toUpperCase() === targetColor.toUpperCase();
+    const answerTime = Date.now();
+
+    // Record this player's answer
+    room.currentRound.playerAnswers[socket.id] = {
+      answer,
+      isCorrect,
+      timestamp: answerTime
+    };
+
+    console.log('Answer recorded:', { socketId: socket.id, isCorrect, answer });
+
+    if (isCorrect) {
+      // Player got it right - they win the round immediately
       room.scores[socket.id] = (room.scores[socket.id] || 0) + 1;
       
-      // Ensure both scores exist
       const scores = {
         [room.hostSocket]: room.scores[room.hostSocket] || 0,
         [room.guestSocket!]: room.scores[room.guestSocket!] || 0
       };
-      
-      console.log('Updated scores:', scores);
-      
-      io.to(roomCode).emit('roundResult', {
-        winner: socket.id,
-        scores: scores
+
+      console.log('Correct answer - round won!', { winner: socket.id, scores });
+
+      // Send immediate feedback to both players
+      socket.emit('roundFeedback', {
+        type: 'correct',
+        message: 'Correct! You got the point!'
       });
 
-      // Check for game winner
-      if (room.scores[socket.id] >= 7) {
-        console.log('Game over! Winner:', socket.id);
-        io.to(roomCode).emit('gameOver', { 
-          winnerId: socket.id,
-          finalScores: scores
+      // Send feedback to opponent
+      const opponentSocket = socket.id === room.hostSocket ? room.guestSocket : room.hostSocket;
+      if (opponentSocket) {
+        io.to(opponentSocket).emit('roundFeedback', {
+          type: 'too_slow',
+          message: 'Too slow! Opponent got it first.'
         });
-        room.inGame = false;
-        return;
       }
 
-      // Start new round after a short delay
+      // Emit round result after short delay for feedback
       setTimeout(() => {
-        const newRound = generateNewRound();
-        room.currentRound = newRound;
-        io.to(roomCode).emit('roundStart', newRound);
+        io.to(roomCode).emit('roundResult', {
+          winner: socket.id,
+          scores: scores
+        });
+
+        // Check for game winner
+        if (room.scores[socket.id] >= 7) {
+          console.log('Game over! Winner:', socket.id);
+          io.to(roomCode).emit('gameOver', { 
+            winnerId: socket.id,
+            finalScores: scores
+          });
+          room.inGame = false;
+          return;
+        }
+
+        // Start new round after feedback delay
+        setTimeout(() => {
+          const newRound = generateNewRound();
+          room.currentRound = newRound;
+          io.to(roomCode).emit('roundStart', newRound);
+        }, 1000);
       }, 2000);
+
     } else {
-      console.log('Incorrect answer');
+      // Player got it wrong - show X and disable them
+      console.log('Incorrect answer - player eliminated');
+      
+      socket.emit('roundFeedback', {
+        type: 'incorrect',
+        message: 'Incorrect! Wait for opponent...'
+      });
+
+      // Check if opponent has already answered
+      const opponentSocket = socket.id === room.hostSocket ? room.guestSocket : room.hostSocket;
+      const opponentAnswer = room.currentRound.playerAnswers[opponentSocket!];
+
+      if (opponentAnswer) {
+        // Both players have answered
+        if (opponentAnswer.isCorrect) {
+          // Opponent was correct, they win
+          room.scores[opponentSocket!] = (room.scores[opponentSocket!] || 0) + 1;
+          
+          const scores = {
+            [room.hostSocket]: room.scores[room.hostSocket] || 0,
+            [room.guestSocket!]: room.scores[room.guestSocket!] || 0
+          };
+
+          // This should already be handled by the opponent's correct answer
+          // But just in case there's a race condition
+          setTimeout(() => {
+            io.to(roomCode).emit('roundResult', {
+              winner: opponentSocket,
+              scores: scores
+            });
+
+            if (room.scores[opponentSocket!] >= 7) {
+              io.to(roomCode).emit('gameOver', { 
+                winnerId: opponentSocket,
+                finalScores: scores
+              });
+              room.inGame = false;
+              return;
+            }
+
+            setTimeout(() => {
+              const newRound = generateNewRound();
+              room.currentRound = newRound;
+              io.to(roomCode).emit('roundStart', newRound);
+            }, 1000);
+          }, 2000);
+        } else {
+          // Both players got it wrong - no one gets a point
+          setTimeout(() => {
+            io.to(roomCode).emit('roundResult', {
+              winner: null,
+              scores: {
+                [room.hostSocket]: room.scores[room.hostSocket] || 0,
+                [room.guestSocket!]: room.scores[room.guestSocket!] || 0
+              }
+            });
+
+            setTimeout(() => {
+              const newRound = generateNewRound();
+              room.currentRound = newRound;
+              io.to(roomCode).emit('roundStart', newRound);
+            }, 1000);
+          }, 2000);
+        }
+      }
+      // If opponent hasn't answered yet, just wait
     }
   });
 

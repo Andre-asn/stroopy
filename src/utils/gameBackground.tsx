@@ -1,11 +1,65 @@
 interface GameBackgroundProps {
     targetWord: string;
     targetColor: string;
+    showingFeedback?: boolean;
+    feedbackType?: 'correct' | 'incorrect' | null;
 }
 
-const GameBackground: React.FC<GameBackgroundProps> = ({ targetWord, targetColor }) => {
+const GameBackground: React.FC<GameBackgroundProps> = ({ 
+    targetWord, 
+    targetColor, 
+    showingFeedback = false,
+    feedbackType = null 
+}) => {
+    if (showingFeedback) {
+        // During feedback, show two large symbols on left and right sides
+        const symbol = feedbackType === 'correct' ? '✓' : '✗';
+        const color = feedbackType === 'correct' ? '#22C55E' : '#EF4444';
+        
+        return (
+            <>
+                {/* Left side symbol */}
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: '4rem',
+                        top: '50vh',
+                        marginTop: '-10rem', // Half of font size to center
+                        color: color,
+                        fontSize: '20rem',
+                        opacity: 0.4,
+                        zIndex: 0,
+                        pointerEvents: 'none',
+                        userSelect: 'none'
+                    }}
+                >
+                    {symbol}
+                </div>
+                
+                {/* Right side symbol */}
+                <div
+                    style={{
+                        position: 'fixed',
+                        right: '4rem',
+                        top: '50vh',
+                        marginTop: '-10rem', // Half of font size to center
+                        color: color,
+                        fontSize: '20rem',
+                        opacity: 0.4,
+                        zIndex: 0,
+                        pointerEvents: 'none',
+                        userSelect: 'none'
+                    }}
+                >
+                    {symbol}
+                </div>
+            </>
+        );
+    }
+
+    // Normal gameplay - show target words
     const rows = [];
-    const numberOfRows = 13; 
+    const numberOfRows = 15; 
     const wordsPerRow = 30; 
 
     for (let i = 0; i < numberOfRows; i++) {
