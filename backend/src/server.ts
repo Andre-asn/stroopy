@@ -15,6 +15,7 @@ interface GameRoom {
       hostColor: string; // 'green'
       guestColor: string; // 'red'
     };
+    roundCount: number; // Track how many rounds have been played
     currentRound?: {
       targetWord: string;
       targetColor: string;
@@ -163,6 +164,7 @@ io.on('connection', (socket: Socket) => {
       hostSocket: socket.id,
       readyPlayers: new Set(),
       tugOfWar: initializeTugOfWar(), // Initialize tug-of-war scoring
+      roundCount: 0, // Initialize round counter
       inGame: false
     });
     
@@ -289,16 +291,16 @@ io.on('connection', (socket: Socket) => {
       let capturedSquareIndex = -1;
       
       if (isHost) {
-        // Host captures from right side (guest's squares), moving left from center
-        for (let i = 13; i >= 0; i--) {
+        // Host captures from center moving right (guest's territory)
+        for (let i = 7; i < 14; i++) {
           if (room.tugOfWar.squares[i] === 'guest') {
             capturedSquareIndex = i;
             break;
           }
         }
       } else {
-        // Guest captures from left side (host's squares), moving right from center
-        for (let i = 0; i < 14; i++) {
+        // Guest captures from center moving left (host's territory) 
+        for (let i = 6; i >= 0; i--) {
           if (room.tugOfWar.squares[i] === 'host') {
             capturedSquareIndex = i;
             break;
@@ -310,6 +312,9 @@ io.on('connection', (socket: Socket) => {
         // Capture the square
         room.tugOfWar.squares[capturedSquareIndex] = playerType;
         console.log(`Square ${capturedSquareIndex} captured by ${playerType}`);
+        
+        // Increment round count only when someone captures a square
+        room.roundCount++;
       }
   
       // Check for win condition (all squares same color) - FIXED: Check AFTER capture
@@ -343,10 +348,11 @@ io.on('connection', (socket: Socket) => {
         // Check for game winner (all squares same color)
         if (hostSquares === 14 || guestSquares === 14) {
           const winnerId = hostSquares === 14 ? room.hostSocket : room.guestSocket;
-          console.log('Game over! Winner:', winnerId);
+          console.log('Game over! Winner:', winnerId, 'Rounds played:', room.roundCount);
           io.to(roomCode).emit('gameOver', { 
             winnerId: winnerId,
-            finalTugOfWar: room.tugOfWar
+            finalTugOfWar: room.tugOfWar,
+            roundCount: room.roundCount
           });
           room.inGame = false;
           return;
@@ -438,8 +444,9 @@ io.on('connection', (socket: Socket) => {
       // Second player accepting rematch
       room.readyPlayers.add(socket.id);
       if (room.readyPlayers.size === 2) {
-        // Reset room state - FIXED: Reset tugOfWar instead of scores
+        // Reset room state - FIXED: Reset tugOfWar and round count
         room.tugOfWar = initializeTugOfWar();
+        room.roundCount = 0;
         room.rematchRequested = false;
         room.inGame = true;
         

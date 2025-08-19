@@ -116,8 +116,8 @@ const VersusGame = () => {
             }
         });
 
-        // Handle game over with tug-of-war data
-        socket.on('gameOver', ({ winnerId, finalTugOfWar }: { winnerId: string, finalTugOfWar: TugOfWar }) => {
+        // Handle game over with tug-of-war data and round count
+        socket.on('gameOver', ({ winnerId, finalTugOfWar, roundCount }: { winnerId: string, finalTugOfWar: TugOfWar, roundCount: number }) => {
             const isWinner = socket.id === winnerId;
             
             navigate('/gameOver', {
@@ -125,6 +125,7 @@ const VersusGame = () => {
                     gameMode: 'multiplayer',
                     isWinner,
                     finalTugOfWar,
+                    roundCount,
                     roomCode,
                     isHost
                 }
@@ -169,18 +170,28 @@ const VersusGame = () => {
         });
     };
 
-    // Helper function to get square color
+    // Helper function to get square color based on client perspective
     const getSquareColor = (_index: number, owner: 'host' | 'guest') => {
-        if (owner === 'host') {
-            return 'bg-green-500 border-green-700'; // Host color (green)
+        // Each player sees themselves as green, opponent as red
+        const isMySquare = (isHost && owner === 'host') || (!isHost && owner === 'guest');
+        
+        if (isMySquare) {
+            return 'bg-green-500 border-green-700'; // My squares are green
         } else {
-            return 'bg-red-500 border-red-700'; // Guest color (red)
+            return 'bg-red-500 border-red-700'; // Opponent squares are red
         }
     };
 
-    // Helper function to get player territory count
-    const getPlayerSquareCount = (playerType: 'host' | 'guest') => {
-        return tugOfWar.squares.filter(sq => sq === playerType).length;
+    // Helper function to get my territory count
+    const getMySquareCount = () => {
+        const myOwnerType = isHost ? 'host' : 'guest';
+        return tugOfWar.squares.filter(sq => sq === myOwnerType).length;
+    };
+
+    // Helper function to get opponent territory count  
+    const getOpponentSquareCount = () => {
+        const opponentOwnerType = isHost ? 'guest' : 'host';
+        return tugOfWar.squares.filter(sq => sq === opponentOwnerType).length;
     };
 
     if (!gameState) {
@@ -191,8 +202,8 @@ const VersusGame = () => {
         );
     }
 
-    const mySquareCount = getPlayerSquareCount(isHost ? 'host' : 'guest');
-    const opponentSquareCount = getPlayerSquareCount(isHost ? 'guest' : 'host');
+    const mySquareCount = getMySquareCount();
+    const opponentSquareCount = getOpponentSquareCount();
 
     return (
         <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 gap-4 sm:gap-8 relative overflow-hidden">

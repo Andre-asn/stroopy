@@ -19,6 +19,7 @@ interface MultiplayerState {
         hostColor: string;
         guestColor: string;
     };
+    roundCount?: number; // New field for round tracking
     roomCode: string;
     isHost: boolean;
     // Legacy support for old scoring system
@@ -119,17 +120,20 @@ const GameOver = () => {
         );
     }
 
-    // Multiplayer Game Over (both old and new systems)
+    // Multiplayer Game Over (simplified version)
     const multiplayerState = state as MultiplayerState;
     
-    // Helper function to get square color for display
-    const getSquareColor = (owner: 'host' | 'guest', isHost: boolean) => {
-        if ((owner === 'host' && isHost) || (owner === 'guest' && !isHost)) {
-            return 'bg-green-500 border-green-700'; // Player's color
-        } else {
-            return 'bg-red-500 border-red-700'; // Opponent's color
-        }
-    };
+    // Calculate round count from final tug-of-war state if not provided
+    let roundCount = multiplayerState.roundCount;
+    if (!roundCount && multiplayerState.finalTugOfWar) {
+        // Count how many squares were captured (started with 7 each, winner has 14)
+        const winnerSquares = multiplayerState.isWinner ? 
+            (multiplayerState.isHost ? 
+                multiplayerState.finalTugOfWar.squares.filter(sq => sq === 'host').length :
+                multiplayerState.finalTugOfWar.squares.filter(sq => sq === 'guest').length) :
+            0;
+        roundCount = Math.max(winnerSquares - 7, 7); // Minimum 7 rounds needed to win
+    }
 
     return (
         <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
@@ -140,36 +144,24 @@ const GameOver = () => {
                     {multiplayerState.isWinner ? '🏆 Victory!' : '💔 Defeat!'}
                 </h1>
 
-                {/* Show tug-of-war result if available */}
-                {multiplayerState.finalTugOfWar ? (
-                    <div className="text-center text-white mb-4 sm:mb-6">
-                        <p className="text-lg mb-4">Final Territory</p>
-                        
-                        {/* Display the final tug-of-war squares */}
-                        <div className="flex gap-1 mb-4 justify-center">
-                            {multiplayerState.finalTugOfWar.squares.map((owner, index) => (
-                                <div
-                                    key={index}
-                                    className={`w-4 h-4 sm:w-6 sm:h-6 border-2 ${getSquareColor(owner, multiplayerState.isHost)}`}
-                                />
-                            ))}
+                <div className="text-center text-white mb-4 sm:mb-6">
+                    <p className="text-lg mb-2">
+                        {multiplayerState.isWinner ? 'You won!' : 'You lost!'}
+                    </p>
+                    
+                    {roundCount && (
+                        <div className="text-2xl sm:text-3xl font-bold text-yellow-400">
+                            {roundCount} rounds
                         </div>
-                        
-                        <div className="text-sm text-gray-400">
-                            {multiplayerState.isWinner 
-                                ? "You captured all the territory!" 
-                                : "Opponent captured all the territory!"
-                            }
-                        </div>
-                    </div>
-                ) : (
-                    /* Fallback to old scoring system */
-                    <div className="text-lg sm:text-xl text-white mb-4 sm:mb-6">
-                        <p>Final Score</p>
-                        <p className="mt-2">You: {multiplayerState.myScore || 0}</p>
-                        <p>Opponent: {multiplayerState.opponentScore || 0}</p>
-                    </div>
-                )}
+                    )}
+                    
+                    <p className="text-sm text-gray-400 mt-2">
+                        {multiplayerState.isWinner 
+                            ? `Captured all territory in ${roundCount} rounds!`
+                            : `Opponent captured all territory in ${roundCount} rounds.`
+                        }
+                    </p>
+                </div>
 
                 <div className="flex flex-col gap-3 sm:gap-4 w-full">
                     <Button
