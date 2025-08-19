@@ -12,6 +12,12 @@ interface GameState {
     buttonStates: Array<{ word: string; color: string } | null>;
 }
 
+interface TugOfWar {
+    squares: Array<'host' | 'guest'>;
+    hostColor: string;
+    guestColor: string;
+}
+
 interface RoundFeedback {
     type: 'correct' | 'incorrect' | 'too_slow';
     message: string;
@@ -24,12 +30,15 @@ const VersusGame = () => {
 
     const [socket, setSocket] = useState<Socket | null>(null);
     const [gameState, setGameState] = useState<GameState | null>(null);
-    const [myScore, setMyScore] = useState(0);
-    const [opponentScore, setOpponentScore] = useState(0);
+    const [tugOfWar, setTugOfWar] = useState<TugOfWar>({
+        squares: [...Array(7).fill('host'), ...Array(7).fill('guest')],
+        hostColor: 'green',
+        guestColor: 'red'
+    });
     const [roundResult, setRoundResult] = useState<string | null>(null);
     const [isRoundActive, setIsRoundActive] = useState(true);
     
-    // New feedback states
+    // Feedback states
     const [showingFeedback, setShowingFeedback] = useState(false);
     const [feedbackType, setFeedbackType] = useState<'correct' | 'incorrect' | null>(null);
     const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
@@ -78,7 +87,7 @@ const VersusGame = () => {
             setFeedbackMessage(null);
         });
 
-        // New feedback event handler
+        // Handle feedback
         socket.on('roundFeedback', (feedback: RoundFeedback) => {
             console.log('Received feedback:', feedback);
             setShowingFeedback(true);
@@ -87,40 +96,35 @@ const VersusGame = () => {
             if (feedback.type === 'correct') {
                 setFeedbackType('correct');
             } else {
-                setFeedbackType('incorrect'); // Both 'incorrect' and 'too_slow' show X
+                setFeedbackType('incorrect');
             }
             
-            // Disable further input
             setIsRoundActive(false);
         });
 
-        socket.on('roundResult', ({ winner, scores }: { winner: string | null, scores: { [key: string]: number } }) => {
-            console.log('Round result:', { winner, scores });
+        // Handle round results with new tug-of-war data
+        socket.on('roundResult', ({ winner, tugOfWar: newTugOfWar }: { winner: string | null, tugOfWar: TugOfWar }) => {
+            console.log('Round result:', { winner, tugOfWar: newTugOfWar });
+            
+            // Update tug-of-war state
+            setTugOfWar(newTugOfWar);
             
             if (winner) {
-                setRoundResult(winner === socket.id ? 'You got the point!' : 'Opponent got the point!');
+                setRoundResult(winner === socket.id ? 'You captured a square!' : 'Opponent captured your square!');
             } else {
-                setRoundResult('No one got the point!');
-            }
-            
-            // Update scores
-            if (socket.id) {
-                setMyScore(scores[socket.id] || 0);
-                const opponentScore = Object.entries(scores).find(([id]) => id !== socket.id)?.[1] || 0;
-                setOpponentScore(opponentScore);
+                setRoundResult('No squares captured this round!');
             }
         });
 
-        socket.on('gameOver', ({ winnerId, finalScores }: { winnerId: string, finalScores: { [key: string]: number } }) => {
+        // Handle game over with tug-of-war data
+        socket.on('gameOver', ({ winnerId, finalTugOfWar }: { winnerId: string, finalTugOfWar: TugOfWar }) => {
             const isWinner = socket.id === winnerId;
-            const myFinalScore = finalScores[socket.id!] || 0;
-            const opponentFinalScore = Object.entries(finalScores).find(([id]) => id !== socket.id)?.[1] || 0;
             
             navigate('/gameOver', {
                 state: {
+                    gameMode: 'multiplayer',
                     isWinner,
-                    myScore: myFinalScore,
-                    opponentScore: opponentFinalScore,
+                    finalTugOfWar,
                     roomCode,
                     isHost
                 }
@@ -134,7 +138,7 @@ const VersusGame = () => {
 
         return () => {
             socket.off('roundStart');
-            socket.off('roundFeedback'); // New cleanup
+            socket.off('roundFeedback');
             socket.off('roundResult');
             socket.off('gameOver');
             socket.off('playerLeft');
@@ -165,6 +169,20 @@ const VersusGame = () => {
         });
     };
 
+    // Helper function to get square color
+    const getSquareColor = (_index: number, owner: 'host' | 'guest') => {
+        if (owner === 'host') {
+            return 'bg-green-500 border-green-700'; // Host color (green)
+        } else {
+            return 'bg-red-500 border-red-700'; // Guest color (red)
+        }
+    };
+
+    // Helper function to get player territory count
+    const getPlayerSquareCount = (playerType: 'host' | 'guest') => {
+        return tugOfWar.squares.filter(sq => sq === playerType).length;
+    };
+
     if (!gameState) {
         return (
             <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center">
@@ -172,6 +190,9 @@ const VersusGame = () => {
             </div>
         );
     }
+
+    const mySquareCount = getPlayerSquareCount(isHost ? 'host' : 'guest');
+    const opponentSquareCount = getPlayerSquareCount(isHost ? 'guest' : 'host');
 
     return (
         <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 gap-4 sm:gap-8 relative overflow-hidden">
@@ -190,9 +211,10 @@ const VersusGame = () => {
                 Leave Game
             </Button>
 
+            {/* Updated score display with territory count */}
             <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-gray-800 px-2 sm:px-4 py-1 sm:py-2 rounded-lg flex gap-2 sm:gap-4">
-                <span className="text-white text-sm sm:text-xl font-mono">You: {myScore}</span>
-                <span className="text-white text-sm sm:text-xl font-mono">Opponent: {opponentScore}</span>
+                <span className="text-green-400 text-sm sm:text-xl font-mono">You: {mySquareCount}</span>
+                <span className="text-red-400 text-sm sm:text-xl font-mono">Opponent: {opponentSquareCount}</span>
             </div>
 
             {/* Feedback message display */}
@@ -212,6 +234,16 @@ const VersusGame = () => {
                     <span className="text-white text-sm sm:text-xl">{roundResult}</span>
                 </div>
             )}
+
+            {/* Tug-of-War Score Squares */}
+            <div className="flex gap-1 sm:gap-2 z-10">
+                {tugOfWar.squares.map((owner, index) => (
+                    <div
+                        key={index}
+                        className={`w-6 h-6 sm:w-8 sm:h-8 border-2 transition-colors duration-300 ${getSquareColor(index, owner)}`}
+                    />
+                ))}
+            </div>
 
             {/* Enhanced button grid with feedback */}
             <div className="bg-gray-700 grid grid-cols-3 gap-2 sm:gap-4 z-10">

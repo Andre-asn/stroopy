@@ -9,9 +9,11 @@ interface GameRoom {
     guest?: string;
     guestSocket?: string;
     readyPlayers: Set<string>;
-    // Game state
-    scores: {
-      [key: string]: number;
+    // New tug-of-war scoring system
+    tugOfWar: {
+      squares: Array<'host' | 'guest'>; // 14 squares, each owned by host or guest
+      hostColor: string; // 'green'
+      guestColor: string; // 'red'
     };
     currentRound?: {
       targetWord: string;
@@ -134,10 +136,25 @@ const generateNewRound = () => {
   };
 };
 
+// Initialize a new tug-of-war game
+const initializeTugOfWar = (): GameRoom['tugOfWar'] => {
+    // Start with left 7 squares for host (green), right 7 for guest (red)
+    const squares: Array<'host' | 'guest'> = [
+      ...Array(7).fill('host'),
+      ...Array(7).fill('guest')
+    ];
+    
+    return {
+      squares,
+      hostColor: 'green',
+      guestColor: 'red'
+    };
+  };
+
 io.on('connection', (socket: Socket) => {
   console.log('A user connected', socket.id);
 
-  // Handle room creation
+  // Handle room creation with new scoring
   socket.on('createRoom', ({ username }) => {
     console.log('Creating room for user:', username);
     const roomCode = generateRoomCode();
@@ -145,9 +162,7 @@ io.on('connection', (socket: Socket) => {
       host: username,
       hostSocket: socket.id,
       readyPlayers: new Set(),
-      scores: {
-        [socket.id]: 0
-      },
+      tugOfWar: initializeTugOfWar(), // Initialize tug-of-war scoring
       inGame: false
     });
     
@@ -173,11 +188,6 @@ io.on('connection', (socket: Socket) => {
 
     room.guest = username;
     room.guestSocket = socket.id;
-    // Initialize guest's score
-    room.scores = {
-      [room.hostSocket]: room.scores[room.hostSocket] || 0,
-      [socket.id]: 0
-    };
     
     socket.join(roomCode);
 
@@ -241,79 +251,107 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  // Handle player answer with new competitive logic
+  // Handle player answer with tug-of-war logic
   socket.on('playerAnswer', ({ roomCode, answer, targetColor }) => {
     console.log('Received answer:', { roomCode, answer, targetColor });
     const room = gameRooms.get(roomCode);
     if (!room || !room.currentRound) return;
-
+  
     // Check if this player already answered this round
     if (room.currentRound.playerAnswers && room.currentRound.playerAnswers[socket.id]) {
       console.log('Player already answered this round');
       return;
     }
-
+  
     // Initialize playerAnswers if not exists
     if (!room.currentRound.playerAnswers) {
       room.currentRound.playerAnswers = {};
     }
-
+  
     const isCorrect = answer.toUpperCase() === targetColor.toUpperCase();
     const answerTime = Date.now();
-
+    const isHost = socket.id === room.hostSocket;
+  
     // Record this player's answer
     room.currentRound.playerAnswers[socket.id] = {
       answer,
       isCorrect,
       timestamp: answerTime
     };
-
-    console.log('Answer recorded:', { socketId: socket.id, isCorrect, answer });
-
+  
+    console.log('Answer recorded:', { socketId: socket.id, isCorrect, answer, isHost });
+  
     if (isCorrect) {
-      // Player got it right - they win the round immediately
-      room.scores[socket.id] = (room.scores[socket.id] || 0) + 1;
+      // Player got it right - they capture a square from the opponent
+      const playerType: 'host' | 'guest' = isHost ? 'host' : 'guest';
       
-      const scores = {
-        [room.hostSocket]: room.scores[room.hostSocket] || 0,
-        [room.guestSocket!]: room.scores[room.guestSocket!] || 0
-      };
-
-      console.log('Correct answer - round won!', { winner: socket.id, scores });
-
+      // Find the first square owned by opponent (starting from center)
+      let capturedSquareIndex = -1;
+      
+      if (isHost) {
+        // Host captures from right side (guest's squares), moving left from center
+        for (let i = 13; i >= 0; i--) {
+          if (room.tugOfWar.squares[i] === 'guest') {
+            capturedSquareIndex = i;
+            break;
+          }
+        }
+      } else {
+        // Guest captures from left side (host's squares), moving right from center
+        for (let i = 0; i < 14; i++) {
+          if (room.tugOfWar.squares[i] === 'host') {
+            capturedSquareIndex = i;
+            break;
+          }
+        }
+      }
+  
+      if (capturedSquareIndex !== -1) {
+        // Capture the square
+        room.tugOfWar.squares[capturedSquareIndex] = playerType;
+        console.log(`Square ${capturedSquareIndex} captured by ${playerType}`);
+      }
+  
+      // Check for win condition (all squares same color) - FIXED: Check AFTER capture
+      const hostSquares = room.tugOfWar.squares.filter(sq => sq === 'host').length;
+      const guestSquares = room.tugOfWar.squares.filter(sq => sq === 'guest').length;
+      
+      console.log('Current square count:', { hostSquares, guestSquares });
+  
       // Send immediate feedback to both players
       socket.emit('roundFeedback', {
         type: 'correct',
-        message: 'Correct! You got the point!'
+        message: 'Correct! You captured a square!'
       });
-
+  
       // Send feedback to opponent
       const opponentSocket = socket.id === room.hostSocket ? room.guestSocket : room.hostSocket;
       if (opponentSocket) {
         io.to(opponentSocket).emit('roundFeedback', {
           type: 'too_slow',
-          message: 'Too slow! Opponent got it first.'
+          message: 'Too slow! Opponent captured your square.'
         });
       }
-
+  
       // Emit round result after short delay for feedback
       setTimeout(() => {
         io.to(roomCode).emit('roundResult', {
           winner: socket.id,
-          scores: scores
+          tugOfWar: room.tugOfWar
         });
-
-        // Check for game winner
-        if (room.scores[socket.id] >= 7) {
-          console.log('Game over! Winner:', socket.id);
+  
+        // Check for game winner (all squares same color)
+        if (hostSquares === 14 || guestSquares === 14) {
+          const winnerId = hostSquares === 14 ? room.hostSocket : room.guestSocket;
+          console.log('Game over! Winner:', winnerId);
           io.to(roomCode).emit('gameOver', { 
-            winnerId: socket.id,
-            finalScores: scores
+            winnerId: winnerId,
+            finalTugOfWar: room.tugOfWar
           });
           room.inGame = false;
           return;
         }
-
+  
         // Start new round after feedback delay
         setTimeout(() => {
           const newRound = generateNewRound();
@@ -321,7 +359,7 @@ io.on('connection', (socket: Socket) => {
           io.to(roomCode).emit('roundStart', newRound);
         }, 1000);
       }, 2000);
-
+  
     } else {
       // Player got it wrong - show X and disable them
       console.log('Incorrect answer - player eliminated');
@@ -330,56 +368,25 @@ io.on('connection', (socket: Socket) => {
         type: 'incorrect',
         message: 'Incorrect! Wait for opponent...'
       });
-
+  
       // Check if opponent has already answered
       const opponentSocket = socket.id === room.hostSocket ? room.guestSocket : room.hostSocket;
       const opponentAnswer = room.currentRound.playerAnswers[opponentSocket!];
-
+  
       if (opponentAnswer) {
         // Both players have answered
         if (opponentAnswer.isCorrect) {
-          // Opponent was correct, they win
-          room.scores[opponentSocket!] = (room.scores[opponentSocket!] || 0) + 1;
-          
-          const scores = {
-            [room.hostSocket]: room.scores[room.hostSocket] || 0,
-            [room.guestSocket!]: room.scores[room.guestSocket!] || 0
-          };
-
-          // This should already be handled by the opponent's correct answer
-          // But just in case there's a race condition
-          setTimeout(() => {
-            io.to(roomCode).emit('roundResult', {
-              winner: opponentSocket,
-              scores: scores
-            });
-
-            if (room.scores[opponentSocket!] >= 7) {
-              io.to(roomCode).emit('gameOver', { 
-                winnerId: opponentSocket,
-                finalScores: scores
-              });
-              room.inGame = false;
-              return;
-            }
-
-            setTimeout(() => {
-              const newRound = generateNewRound();
-              room.currentRound = newRound;
-              io.to(roomCode).emit('roundStart', newRound);
-            }, 1000);
-          }, 2000);
+          // Opponent was correct, they should have already won
+          // This case should be handled by opponent's correct answer logic
+          console.log('Opponent already won this round');
         } else {
-          // Both players got it wrong - no one gets a point
+          // Both players got it wrong - no one captures squares
           setTimeout(() => {
             io.to(roomCode).emit('roundResult', {
               winner: null,
-              scores: {
-                [room.hostSocket]: room.scores[room.hostSocket] || 0,
-                [room.guestSocket!]: room.scores[room.guestSocket!] || 0
-              }
+              tugOfWar: room.tugOfWar // No change to squares
             });
-
+  
             setTimeout(() => {
               const newRound = generateNewRound();
               room.currentRound = newRound;
@@ -416,7 +423,7 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  // Handle rematch request
+  // Handle rematch request - FIXED: Reset tugOfWar instead of scores
   socket.on('requestRematch', ({ roomCode }) => {
     console.log('Rematch requested:', { roomCode, socketId: socket.id });
     const room = gameRooms.get(roomCode);
@@ -431,11 +438,8 @@ io.on('connection', (socket: Socket) => {
       // Second player accepting rematch
       room.readyPlayers.add(socket.id);
       if (room.readyPlayers.size === 2) {
-        // Reset room state
-        room.scores = {
-          [room.hostSocket]: 0,
-          [room.guestSocket!]: 0
-        };
+        // Reset room state - FIXED: Reset tugOfWar instead of scores
+        room.tugOfWar = initializeTugOfWar();
         room.rematchRequested = false;
         room.inGame = true;
         
@@ -445,7 +449,7 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  // Handle leaving game
+  // Handle leaving game - FIXED: Remove tugOfWar references instead of scores
   socket.on('leaveGame', ({ roomCode }) => {
     const room = gameRooms.get(roomCode);
     if (!room) return;
@@ -453,7 +457,6 @@ io.on('connection', (socket: Socket) => {
     if (socket.id === room.guestSocket) {
       room.guest = undefined;
       room.guestSocket = undefined;
-      delete room.scores[socket.id];
       socket.leave(roomCode);
       io.to(roomCode).emit('playerLeft');
     } else if (socket.id === room.hostSocket) {
@@ -462,7 +465,7 @@ io.on('connection', (socket: Socket) => {
     }
   });
 
-  // Handle disconnection
+  // Handle disconnection - FIXED: Remove scores references
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     
@@ -475,7 +478,6 @@ io.on('connection', (socket: Socket) => {
             } else if (socket.id === room.guestSocket) {
                 room.guest = undefined;
                 room.guestSocket = undefined;
-                delete room.scores[socket.id];
                 io.to(roomCode).emit('playerLeft');
             }
         }
@@ -486,4 +488,4 @@ io.on('connection', (socket: Socket) => {
 const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-}); 
+});

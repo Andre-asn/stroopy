@@ -69,9 +69,9 @@ const Home = () => {
             </div>
 
             <div className="absolute bottom-8 sm:bottom-14 text-center text-gray-500 text-xs z-10">
-                <p>Stroopy v0.4</p>
+                <p>Stroopy v0.5</p>
                 <p>Created by [Andre Santiago-Neyra]</p>
-                <p><a href="https://github.com/Andre-asn" className="hover:text-gray-300 underline" target="_blank" rel="noopener noreferrer">GitHub</a> | <a href="mailto:andresanti.asn@gmail.com" className="hover:text-gray-300 underline">Contact</a></p>
+                <p><a href="https://github.com/Andre-asn" className="hover:text-gray-300 underline" target="_blank" rel="noopener noreferrer">GitHub</a></p>
             </div>
         </div>
     );

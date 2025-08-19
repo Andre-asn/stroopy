@@ -14,10 +14,16 @@ interface SingleplayerState {
 interface MultiplayerState {
     gameMode?: 'multiplayer';
     isWinner: boolean;
-    myScore: number;
-    opponentScore: number;
+    finalTugOfWar?: {
+        squares: Array<'host' | 'guest'>;
+        hostColor: string;
+        guestColor: string;
+    };
     roomCode: string;
     isHost: boolean;
+    // Legacy support for old scoring system
+    myScore?: number;
+    opponentScore?: number;
 }
 
 type GameOverState = SingleplayerState | MultiplayerState;
@@ -113,8 +119,18 @@ const GameOver = () => {
         );
     }
 
-    // Multiplayer Game Over (existing logic)
+    // Multiplayer Game Over (both old and new systems)
     const multiplayerState = state as MultiplayerState;
+    
+    // Helper function to get square color for display
+    const getSquareColor = (owner: 'host' | 'guest', isHost: boolean) => {
+        if ((owner === 'host' && isHost) || (owner === 'guest' && !isHost)) {
+            return 'bg-green-500 border-green-700'; // Player's color
+        } else {
+            return 'bg-red-500 border-red-700'; // Opponent's color
+        }
+    };
+
     return (
         <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
             <MenuBackground />
@@ -124,11 +140,36 @@ const GameOver = () => {
                     {multiplayerState.isWinner ? '🏆 Victory!' : '💔 Defeat!'}
                 </h1>
 
-                <div className="text-lg sm:text-xl text-white mb-4 sm:mb-6">
-                    <p>Final Score</p>
-                    <p className="mt-2">You: {multiplayerState.myScore}</p>
-                    <p>Opponent: {multiplayerState.opponentScore}</p>
-                </div>
+                {/* Show tug-of-war result if available */}
+                {multiplayerState.finalTugOfWar ? (
+                    <div className="text-center text-white mb-4 sm:mb-6">
+                        <p className="text-lg mb-4">Final Territory</p>
+                        
+                        {/* Display the final tug-of-war squares */}
+                        <div className="flex gap-1 mb-4 justify-center">
+                            {multiplayerState.finalTugOfWar.squares.map((owner, index) => (
+                                <div
+                                    key={index}
+                                    className={`w-4 h-4 sm:w-6 sm:h-6 border-2 ${getSquareColor(owner, multiplayerState.isHost)}`}
+                                />
+                            ))}
+                        </div>
+                        
+                        <div className="text-sm text-gray-400">
+                            {multiplayerState.isWinner 
+                                ? "You captured all the territory!" 
+                                : "Opponent captured all the territory!"
+                            }
+                        </div>
+                    </div>
+                ) : (
+                    /* Fallback to old scoring system */
+                    <div className="text-lg sm:text-xl text-white mb-4 sm:mb-6">
+                        <p>Final Score</p>
+                        <p className="mt-2">You: {multiplayerState.myScore || 0}</p>
+                        <p>Opponent: {multiplayerState.opponentScore || 0}</p>
+                    </div>
+                )}
 
                 <div className="flex flex-col gap-3 sm:gap-4 w-full">
                     <Button
