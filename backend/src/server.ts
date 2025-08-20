@@ -14,6 +14,9 @@ interface GameRoom {
       squares: Array<'host' | 'guest'>; // 14 squares, each owned by host or guest
       hostColor: string; // 'green'
       guestColor: string; // 'red'
+      // Track center-most controlled squares for each player
+      hostCenterIndex: number; // Host's rightmost square (starts at 6)
+      guestCenterIndex: number; // Guest's leftmost square (starts at 7)
     };
     roundCount: number; // Track how many rounds have been played
     currentRound?: {
@@ -148,7 +151,9 @@ const initializeTugOfWar = (): GameRoom['tugOfWar'] => {
     return {
       squares,
       hostColor: 'green',
-      guestColor: 'red'
+      guestColor: 'red',
+      hostCenterIndex: 6,  // Host's rightmost square initially
+      guestCenterIndex: 7  // Guest's leftmost square initially
     };
   };
 
@@ -287,48 +292,47 @@ io.on('connection', (socket: Socket) => {
       // Player got it right - they capture a square from the opponent
       const playerType: 'host' | 'guest' = isHost ? 'host' : 'guest';
       
-      // Find the closest square owned by opponent to the center line (6|7)
+      // Use center tracking variables to determine which square to capture
       let capturedSquareIndex = -1;
       
       if (isHost) {
-        // Host captures guest squares, starting from the CENTER and moving outward
-        // Check index 6 first (left of center), then 7 (right of center), then alternate outward
-        const searchOrder = [6, 7, 5, 8, 4, 9, 3, 10, 2, 11, 1, 12, 0, 13];
-        console.log('Host looking for guest squares to capture, checking center-outward...');
-        for (const index of searchOrder) {
-          if (room.tugOfWar.squares[index] === 'guest') {
-            capturedSquareIndex = index;
-            console.log(`Found guest square at index ${index} to capture`);
-            break;
-          }
-        }
+        // Host captures the guest's center-most square
+        capturedSquareIndex = room.tugOfWar.guestCenterIndex;
+        console.log(`Host capturing guest's center square at index ${capturedSquareIndex}`);
       } else {
-        // Guest captures host squares, starting from the CENTER and moving outward  
-        // Check index 7 first (right of center), then 6 (left of center), then alternate outward
-        const searchOrder = [7, 6, 8, 5, 9, 4, 10, 3, 11, 2, 12, 1, 13, 0];
-        console.log('Guest looking for host squares to capture, checking center-outward...');
-        for (const index of searchOrder) {
-          if (room.tugOfWar.squares[index] === 'host') {
-            capturedSquareIndex = index;
-            console.log(`Found host square at index ${index} to capture`);
-            break;
-          }
-        }
+        // Guest captures the host's center-most square
+        capturedSquareIndex = room.tugOfWar.hostCenterIndex;
+        console.log(`Guest capturing host's center square at index ${capturedSquareIndex}`);
       }
       
       console.log('Current squares before capture:', room.tugOfWar.squares);
-      console.log(`Player ${playerType} will capture square at index ${capturedSquareIndex}`);
+      console.log(`Current center indices - Host: ${room.tugOfWar.hostCenterIndex}, Guest: ${room.tugOfWar.guestCenterIndex}`);
   
-      if (capturedSquareIndex !== -1) {
+      if (capturedSquareIndex !== -1 && capturedSquareIndex >= 0 && capturedSquareIndex < 14) {
         // Capture the square
         room.tugOfWar.squares[capturedSquareIndex] = playerType;
         console.log(`Square ${capturedSquareIndex} captured by ${playerType}`);
+        
+        // Update center tracking variables
+        if (isHost) {
+          // Host captured a guest square, so guest's center moves right (away from center)
+          room.tugOfWar.guestCenterIndex++;
+          // Host's center moves right (towards opponent territory)
+          room.tugOfWar.hostCenterIndex++;
+        } else {
+          // Guest captured a host square, so host's center moves left (away from center)
+          room.tugOfWar.hostCenterIndex--;
+          // Guest's center moves left (towards opponent territory)
+          room.tugOfWar.guestCenterIndex--;
+        }
+        
+        console.log(`Updated center indices - Host: ${room.tugOfWar.hostCenterIndex}, Guest: ${room.tugOfWar.guestCenterIndex}`);
         console.log('Squares after capture:', room.tugOfWar.squares);
         
         // Increment round count only when someone captures a square
         room.roundCount++;
       } else {
-        console.log(`No squares available for ${playerType} to capture!`);
+        console.log(`Invalid capture index ${capturedSquareIndex} for ${playerType}!`);
       }
   
       // Check for win condition (all squares same color) - FIXED: Check AFTER capture
