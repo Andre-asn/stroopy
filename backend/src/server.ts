@@ -287,34 +287,48 @@ io.on('connection', (socket: Socket) => {
       // Player got it right - they capture a square from the opponent
       const playerType: 'host' | 'guest' = isHost ? 'host' : 'guest';
       
-      // Find the first square owned by opponent (starting from center)
+      // Find the closest square owned by opponent to the center line (6|7)
       let capturedSquareIndex = -1;
       
       if (isHost) {
-        // Host captures from center moving right (guest's territory)
-        for (let i = 7; i < 14; i++) {
-          if (room.tugOfWar.squares[i] === 'guest') {
-            capturedSquareIndex = i;
+        // Host captures guest squares, starting from the CENTER and moving outward
+        // Check index 6 first (left of center), then 7 (right of center), then alternate outward
+        const searchOrder = [6, 7, 5, 8, 4, 9, 3, 10, 2, 11, 1, 12, 0, 13];
+        console.log('Host looking for guest squares to capture, checking center-outward...');
+        for (const index of searchOrder) {
+          if (room.tugOfWar.squares[index] === 'guest') {
+            capturedSquareIndex = index;
+            console.log(`Found guest square at index ${index} to capture`);
             break;
           }
         }
       } else {
-        // Guest captures from center moving left (host's territory) 
-        for (let i = 6; i >= 0; i--) {
-          if (room.tugOfWar.squares[i] === 'host') {
-            capturedSquareIndex = i;
+        // Guest captures host squares, starting from the CENTER and moving outward  
+        // Check index 7 first (right of center), then 6 (left of center), then alternate outward
+        const searchOrder = [7, 6, 8, 5, 9, 4, 10, 3, 11, 2, 12, 1, 13, 0];
+        console.log('Guest looking for host squares to capture, checking center-outward...');
+        for (const index of searchOrder) {
+          if (room.tugOfWar.squares[index] === 'host') {
+            capturedSquareIndex = index;
+            console.log(`Found host square at index ${index} to capture`);
             break;
           }
         }
       }
+      
+      console.log('Current squares before capture:', room.tugOfWar.squares);
+      console.log(`Player ${playerType} will capture square at index ${capturedSquareIndex}`);
   
       if (capturedSquareIndex !== -1) {
         // Capture the square
         room.tugOfWar.squares[capturedSquareIndex] = playerType;
         console.log(`Square ${capturedSquareIndex} captured by ${playerType}`);
+        console.log('Squares after capture:', room.tugOfWar.squares);
         
         // Increment round count only when someone captures a square
         room.roundCount++;
+      } else {
+        console.log(`No squares available for ${playerType} to capture!`);
       }
   
       // Check for win condition (all squares same color) - FIXED: Check AFTER capture
