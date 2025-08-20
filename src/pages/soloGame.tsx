@@ -11,11 +11,11 @@ const Game = () => {
     const [targetWord, setTargetWord] = useState('');
     const [targetColor, setTargetColor] = useState<keyof typeof COLORS>('RED');
     const [buttonStates, setButtonStates] = useState<Array<{ word: string; color: string } | null>>([]);
-    const [time, setTime] = useState(0);
-    const [isActive, setIsActive] = useState(false);
+    const [, setIsActive] = useState(false);
     const [showingFeedback, setShowingFeedback] = useState(false);
     const [feedbackType, setFeedbackType] = useState<'correct' | 'incorrect' | null>(null);
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const [roundStartTime, setRoundStartTime] = useState<number | null>(null);
+    const [totalTime, setTotalTime] = useState(0); // Cumulative time in milliseconds
     const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const startNewRound = () => {
@@ -25,26 +25,38 @@ const Game = () => {
         setButtonStates(buttonStates);
         setShowingFeedback(false);
         setFeedbackType(null);
+        
+        // Start timing this round
+        setRoundStartTime(Date.now());
     };
 
     const startGame = () => {
         setScoreSquares(Array(14).fill(false));
         setIsActive(true);
-        setTime(0);
+        setTotalTime(0); // Reset cumulative time
         startNewRound();
     };
 
     const handleBack = () => {
-        if (timerRef.current) {
-            clearInterval(timerRef.current);
-        }
         if (feedbackTimeoutRef.current) {
             clearTimeout(feedbackTimeoutRef.current);
         }
         navigate('/');
     };
 
+    const addRoundTime = () => {
+        if (roundStartTime) {
+            const roundEndTime = Date.now();
+            const roundDuration = roundEndTime - roundStartTime;
+            setTotalTime(prev => prev + roundDuration);
+            console.log(`Round took: ${roundDuration}ms, Total: ${totalTime + roundDuration}ms`);
+        }
+    };
+
     const showFeedback = (isCorrect: boolean, gameEnded: boolean = false) => {
+        // Add the round time before showing feedback
+        addRoundTime();
+        
         setShowingFeedback(true);
         setFeedbackType(isCorrect ? 'correct' : 'incorrect');
         
@@ -85,7 +97,7 @@ const Game = () => {
                         navigate('/gameOver', {
                             state: {
                                 gameMode: 'singleplayer',
-                                completionTime: time,
+                                completionTime: totalTime + (roundStartTime ? Date.now() - roundStartTime : 0), // Include current round time
                                 isWinner: true
                             }
                         });
@@ -111,10 +123,12 @@ const Game = () => {
         }
     };
 
-    const formatTime = (timeInSeconds: number) => {
-        const minutes = Math.floor(timeInSeconds / 60);
-        const seconds = timeInSeconds % 60;
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const formatTime = (timeInMilliseconds: number) => {
+        const totalSeconds = timeInMilliseconds / 1000;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        const milliseconds = Math.floor((timeInMilliseconds % 1000) / 10); // Show centiseconds (2 decimal places)
+        return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
     };
 
     useEffect(() => {
@@ -122,22 +136,6 @@ const Game = () => {
             startGame();
         }
     }, []);
-
-    useEffect(() => {
-        if (isActive && !showingFeedback) {
-            timerRef.current = setInterval(() => {
-                setTime(prevTime => prevTime + 1);
-            }, 1000);
-        } else if (timerRef.current) {
-            clearInterval(timerRef.current);
-        }
-
-        return () => {
-            if (timerRef.current) {
-                clearInterval(timerRef.current);
-            }
-        };
-    }, [isActive, showingFeedback]);
 
     // Cleanup timeouts on unmount
     useEffect(() => {
@@ -150,7 +148,7 @@ const Game = () => {
 
     return (
         <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 gap-4 sm:gap-8 relative overflow-hidden">
-            {/* FIXED: Now passing the feedback props correctly */}
+            {/* Enhanced GameBackground with feedback support */}
             <GameBackground 
                 targetWord={showingFeedback ? '' : targetWord} 
                 targetColor={showingFeedback ? '#000000' : COLORS[targetColor]} 
@@ -166,9 +164,9 @@ const Game = () => {
                 Back to Main Menu
             </Button>
 
-            {/* Timer */}
+            {/* Timer - now shows cumulative millisecond time */}
             <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-gray-800 px-2 sm:px-4 py-1 sm:py-2 rounded-lg">
-                <span className="text-white text-sm sm:text-xl font-mono">{formatTime(time)}</span>
+                <span className="text-white text-sm sm:text-xl font-mono">{formatTime(totalTime)}</span>
             </div>
 
             {/* Score squares - no feedback symbols */}

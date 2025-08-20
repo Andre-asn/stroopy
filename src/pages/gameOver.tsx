@@ -7,7 +7,7 @@ import { getSocketUrl } from '../utils/socket';
 
 interface SingleplayerState {
     gameMode: 'singleplayer';
-    completionTime: number;
+    completionTime: number; // Now in milliseconds
     isWinner: true;
 }
 
@@ -58,10 +58,12 @@ const GameOver = () => {
         }
     }, [state, navigate]);
 
-    const formatTime = (timeInSeconds: number) => {
-        const minutes = Math.floor(timeInSeconds / 60);
-        const seconds = timeInSeconds % 60;
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    const formatTime = (timeInMilliseconds: number) => {
+        const totalSeconds = timeInMilliseconds / 1000;
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+        const milliseconds = Math.floor((timeInMilliseconds % 1000) / 10); // Show centiseconds (2 decimal places)
+        return `${minutes}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
     };
 
     const handlePlayAgain = () => {
@@ -88,12 +90,13 @@ const GameOver = () => {
             <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
                 <MenuBackground />
                 
-                <div className="z-10 bg-black/80 p-4 sm:p-8 rounded-lg flex flex-col items-center gap-4 sm:gap-6 w-full max-w-sm sm:max-w-md border border-red-500">
-                    <h1 className="italic text-3xl sm:text-4xl font-bold text-red-400 mb-2 sm:mb-4">
-                        Game Over!
+                <div className="z-10 bg-black/80 p-4 sm:p-8 rounded-lg flex flex-col items-center gap-4 sm:gap-6 w-full max-w-sm sm:max-w-md border border-green-500">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-green-400 mb-2 sm:mb-4">
+                        🎉 Congratulations!
                     </h1>
 
                     <div className="text-center text-white mb-4 sm:mb-6">
+                        <p className="text-lg sm:text-xl mb-2">Game Completed!</p>
                         <div className="text-2xl sm:text-3xl font-bold text-green-400">
                             {formatTime(state.completionTime)}
                         </div>
@@ -105,14 +108,14 @@ const GameOver = () => {
                             onClick={handlePlayAgain}
                             className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base font-bold"
                         >
-                            Play Again
+                            🔄 Play Again
                         </Button>
                         
                         <Button
                             onClick={handleBackToMenu}
                             className="w-full bg-gray-600 hover:bg-gray-700 text-sm sm:text-base"
                         >
-                            Back to Main Menu
+                            🏠 Back to Main Menu
                         </Button>
                     </div>
                 </div>
