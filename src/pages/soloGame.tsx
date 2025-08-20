@@ -97,7 +97,7 @@ const Game = () => {
                         navigate('/gameOver', {
                             state: {
                                 gameMode: 'singleplayer',
-                                completionTime: totalTime + (roundStartTime ? Date.now() - roundStartTime : 0), // Include current round time
+                                completionTime: totalTime, // Don't add current round - already added by addRoundTime()
                                 isWinner: true
                             }
                         });
