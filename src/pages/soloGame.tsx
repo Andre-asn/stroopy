@@ -16,6 +16,7 @@ const Game = () => {
     const [feedbackType, setFeedbackType] = useState<'correct' | 'incorrect' | null>(null);
     const [roundStartTime, setRoundStartTime] = useState<number | null>(null);
     const [totalTime, setTotalTime] = useState(0); // Cumulative time in milliseconds
+    const [currentRoundTime, setCurrentRoundTime] = useState(0); // Current round time in milliseconds
     const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const startNewRound = () => {
@@ -28,12 +29,14 @@ const Game = () => {
         
         // Start timing this round
         setRoundStartTime(Date.now());
+        setCurrentRoundTime(0); // Reset current round time
     };
 
     const startGame = () => {
         setScoreSquares(Array(14).fill(false));
         setIsActive(true);
         setTotalTime(0); // Reset cumulative time
+        setCurrentRoundTime(0); // Reset current round time
         startNewRound();
     };
 
@@ -48,8 +51,8 @@ const Game = () => {
         if (roundStartTime) {
             const roundEndTime = Date.now();
             const roundDuration = roundEndTime - roundStartTime;
-            setTotalTime(prev => prev + roundDuration);
-            console.log(`Round took: ${roundDuration}ms, Total: ${totalTime + roundDuration}ms`);
+            setTotalTime(totalTime + roundDuration);
+            setCurrentRoundTime(0); // Reset current round time
         }
     };
 
@@ -86,23 +89,28 @@ const Game = () => {
                 const index = next.indexOf(false);
                 if (index !== -1) next[index] = true;
                 
-                // Check win condition with the UPDATED array
-                if (next.every(square => square)) {
-                    // All squares filled - game won!
-                    setIsActive(false);
-                    showFeedback(true, true); // Show success feedback
-                    
-                    // Navigate to game over page after feedback
-                    setTimeout(() => {
-                        navigate('/gameOver', {
-                            state: {
-                                gameMode: 'singleplayer',
-                                completionTime: totalTime, // Don't add current round - already added by addRoundTime()
-                                isWinner: true
-                            }
-                        });
-                    }, 2000);
-                } else {
+                								// Check win condition with the UPDATED array
+				if (next.every(square => square)) {
+					// All squares filled - game won!
+					setIsActive(false);
+					
+					// Capture final round time immediately
+					const finalRoundTime = roundStartTime ? Date.now() - roundStartTime : 0;
+					const finalTotalTime = totalTime + finalRoundTime;
+					
+					showFeedback(true, true); // Show success feedback
+					
+					// Navigate to game over page after feedback
+					setTimeout(() => {
+						navigate('/gameOver', {
+							state: {
+								gameMode: 'singleplayer',
+								completionTime: finalTotalTime,
+								isWinner: true
+							}
+						});
+					}, 2000);
+				} else {
                     // Continue playing - show feedback then new round
                     showFeedback(true, false);
                 }
@@ -146,6 +154,19 @@ const Game = () => {
         };
     }, []);
 
+    // Update current round time every 10ms for smooth display
+    useEffect(() => {
+        if (!roundStartTime || showingFeedback) return;
+        
+        const interval = setInterval(() => {
+            const now = Date.now();
+            const elapsed = now - roundStartTime;
+            setCurrentRoundTime(elapsed);
+        }, 10);
+        
+        return () => clearInterval(interval);
+    }, [roundStartTime, showingFeedback]);
+
     return (
         <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 gap-4 sm:gap-8 relative overflow-hidden">
             {/* Enhanced GameBackground with feedback support */}
@@ -166,7 +187,8 @@ const Game = () => {
 
             {/* Timer - now shows cumulative millisecond time */}
             <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-10 bg-gray-800 px-2 sm:px-4 py-1 sm:py-2 rounded-lg">
-                <span className="text-white text-sm sm:text-xl font-mono">{formatTime(totalTime)}</span>
+                <div className="text-white text-sm sm:text-xl font-mono">{formatTime(totalTime)}</div>
+                <div className="text-gray-300 text-xs sm:text-sm font-mono">{formatTime(currentRoundTime)}</div>
             </div>
 
             {/* Score squares - no feedback symbols */}
