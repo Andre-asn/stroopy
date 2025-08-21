@@ -1,12 +1,12 @@
 export const COLORS = {
-    RED: '#EF4444',
-    BLUE: '#3B82F6',
-    GREEN: '#22C55E',
-    YELLOW: '#EAB308',
-    PURPLE: '#A855F7',
-    ORANGE: '#F97316',
-    WHITE: '#FFFFFF',
-  };
+	RED: '#B91C1C', // Changed from #DC2626 to a slightly darker but still vibrant red
+	BLUE: '#3B82F6',
+	GREEN: '#22C55E',
+	YELLOW: '#F59E0B', 
+	PURPLE: '#A855F7',
+	ORANGE: '#EA580C', 
+	WHITE: '#FFFFFF',
+};
   
   export const COLOR_NAMES = Object.keys(COLORS);
   
