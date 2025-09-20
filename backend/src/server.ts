@@ -2,6 +2,13 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
+import dotenv from 'dotenv';
+import { connectMongoDB } from './config/database';
+import authRoutes from './routes/auth';
+import leaderboardRoutes from './routes/leaderboard';
+
+// Load environment variables
+dotenv.config();
 
 interface GameRoom {
     host: string;
@@ -48,7 +55,17 @@ const COLORS = {
 const COLOR_NAMES = Object.keys(COLORS);
 
 const app = express();
+
+// Middleware
 app.use(cors());
+app.use(express.json());
+
+// Connect to database
+connectMongoDB();
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // Add a basic route handler
 app.get('/', (req, res) => {
