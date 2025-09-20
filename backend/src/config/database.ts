@@ -20,7 +20,9 @@ export const redis = new Redis({
 	password: process.env.REDIS_PASSWORD || undefined,
 	maxRetriesPerRequest: 3,
 	lazyConnect: true,
-	tls: process.env.REDIS_HOST?.includes('cache.windows.net') ? {} : undefined
+	tls: process.env.REDIS_HOST?.includes('cache.windows.net') ? {
+		servername: process.env.REDIS_HOST
+	} : undefined
 });
 
 redis.on('connect', () => {
