@@ -67,24 +67,6 @@ connectMongoDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 
-// Add this debug logging
-console.log('✅ Auth routes registered at /api/auth');
-console.log('✅ Leaderboard routes registered at /api/leaderboard');
-
-// Add a catch-all route to see what requests are hitting your server
-app.use('/api/*', (req, res) => {
-    console.log(`❌ Unmatched API route: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({ 
-      error: 'API route not found',
-      method: req.method,
-      url: req.originalUrl,
-      availableRoutes: [
-        'GET /api/auth/*',
-        'GET /api/leaderboard/*'
-      ]
-    });
-  });
-
 // Add a basic route handler
 app.get('/', (req, res) => {
   res.send('Stroopy game server is running!');
