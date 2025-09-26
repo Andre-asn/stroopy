@@ -18,6 +18,9 @@ const Game = () => {
     const [totalTime, setTotalTime] = useState(0); // Cumulative time in milliseconds
     const [currentRoundTime, setCurrentRoundTime] = useState(0); // Current round time in milliseconds
     const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
     const startNewRound = () => {
         const { targetWord, targetColor, buttonStates } = generateNewRound();
@@ -44,6 +47,9 @@ const Game = () => {
         if (feedbackTimeoutRef.current) {
             clearTimeout(feedbackTimeoutRef.current);
         }
+      if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+      }
         navigate('/');
     };
 
@@ -141,7 +147,24 @@ const Game = () => {
 
     useEffect(() => {
         if (state?.autoStart) {
-            startGame();
+            setIsCountingDown(true);
+            setCountdown(3);
+            if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+            }
+            countdownIntervalRef.current = setInterval(() => {
+                setCountdown(prev => {
+                    if (prev <= 1) {
+                        if (countdownIntervalRef.current) {
+                            clearInterval(countdownIntervalRef.current);
+                        }
+                        setIsCountingDown(false);
+                        startGame();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
         }
     }, []);
 
@@ -151,6 +174,9 @@ const Game = () => {
             if (feedbackTimeoutRef.current) {
                 clearTimeout(feedbackTimeoutRef.current);
             }
+          if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+          }
         };
     }, []);
 
@@ -171,8 +197,8 @@ const Game = () => {
         <div className="bg-gray-700 min-h-screen w-full flex flex-col items-center justify-center p-4 sm:p-8 gap-4 sm:gap-8 relative overflow-hidden">
             {/* Enhanced GameBackground with feedback support */}
             <GameBackground 
-                targetWord={showingFeedback ? '' : targetWord} 
-                targetColor={showingFeedback ? '#000000' : COLORS[targetColor]} 
+                targetWord={showingFeedback || isCountingDown ? '' : targetWord} 
+                targetColor={showingFeedback || isCountingDown ? '#000000' : COLORS[targetColor]} 
                 showingFeedback={showingFeedback}
                 feedbackType={feedbackType}
             />
@@ -191,46 +217,59 @@ const Game = () => {
                 <div className="text-gray-300 text-xs sm:text-sm font-mono">{formatTime(currentRoundTime)}</div>
             </div>
 
-            {/* Score squares - no feedback symbols */}
-            <div className="flex gap-1 sm:gap-2 z-10">
-                {scoreSquares.map((filled, index) => (
-                    <div
-                        key={index}
-                        className={`w-6 h-6 sm:w-8 sm:h-8 border-2 ${
-                            filled ? 'bg-green-900 border-black' : 'bg-transparent border-gray-300'
-                        }`}
-                    />
-                ))}
-            </div>
+            {/* Score squares - hidden during countdown */}
+            {!isCountingDown && (
+                <div className="flex gap-1 sm:gap-2 z-10">
+                    {scoreSquares.map((filled, index) => (
+                        <div
+                            key={index}
+                            className={`w-6 h-6 sm:w-8 sm:h-8 border-2 ${
+                                filled ? 'bg-green-900 border-black' : 'bg-transparent border-gray-300'
+                            }`}
+                        />
+                    ))}
+                </div>
+            )}
 
-            {/* Button grid with feedback */}
-            <div className="bg-gray-700 grid grid-cols-3 gap-2 sm:gap-4 z-10">
-                {buttonStates.map((option, index) => (
-                    <button
-                        key={index}
-                        onClick={() => option && handleButtonClick(option.word)}
-                        disabled={showingFeedback}
-                        className={`aspect-square w-24 sm:w-40 border-2 hover:border-4 border-gray-200 rounded-lg transition-all duration-200 text-lg sm:text-2xl font-bold flex items-center justify-center ${
-                            showingFeedback ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                        style={{ 
-                            color: option && !showingFeedback 
-                                ? COLORS[option.color as keyof typeof COLORS] 
-                                : 'transparent' 
-                        }}
-                    >
-                        {showingFeedback ? (
-                            <span className={`text-4xl sm:text-6xl font-bold ${
-                                feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'
-                            }`}>
-                                {feedbackType === 'correct' ? '✓' : '✗'}
-                            </span>
-                        ) : (
-                            option ? option.word : ''
-                        )}
-                    </button>
-                ))}
-            </div>
+            {/* Countdown overlay */}
+            {isCountingDown && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60">
+                    <div className="text-white text-6xl sm:text-8xl font-extrabold">
+                        {countdown}
+                    </div>
+                </div>
+            )}
+
+            {/* Button grid with feedback - hidden during countdown */}
+            {!isCountingDown && (
+                <div className="bg-gray-700 grid grid-cols-3 gap-2 sm:gap-4 z-10">
+                    {buttonStates.map((option, index) => (
+                        <button
+                            key={index}
+                            onClick={() => option && handleButtonClick(option.word)}
+                            disabled={showingFeedback}
+                            className={`aspect-square w-24 sm:w-40 border-2 hover:border-4 border-gray-200 rounded-lg transition-all duration-200 text-lg sm:text-2xl font-bold flex items-center justify-center ${
+                                showingFeedback ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                            style={{ 
+                                color: option && !showingFeedback 
+                                    ? COLORS[option.color as keyof typeof COLORS] 
+                                    : 'transparent' 
+                            }}
+                        >
+                            {showingFeedback ? (
+                                <span className={`text-4xl sm:text-6xl font-bold ${
+                                    feedbackType === 'correct' ? 'text-green-400' : 'text-red-400'
+                                }`}>
+                                    {feedbackType === 'correct' ? '✓' : '✗'}
+                                </span>
+                            ) : (
+                                option ? option.word : ''
+                            )}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
