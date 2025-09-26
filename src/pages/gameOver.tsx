@@ -1,9 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "../components/ui/button";
 import MenuBackground from "../components/menuBackground";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
 import { getSocketUrl } from '../utils/socket';
+import LeaderboardSubmissionModal from '../components/LeaderboardSubmissionModal';
 
 interface SingleplayerState {
     gameMode: 'singleplayer';
@@ -12,7 +13,7 @@ interface SingleplayerState {
 }
 
 interface MultiplayerState {
-    gameMode?: 'multiplayer';
+    gameMode: 'multiplayer';
     isWinner: boolean;
     finalTugOfWar?: {
         squares: Array<'host' | 'guest'>;
@@ -33,6 +34,8 @@ const GameOver = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const state = location.state as GameOverState;
+    const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+    const [scoreSubmitted, setScoreSubmitted] = useState(false);
 
     useEffect(() => {
         // Only handle multiplayer socket logic
@@ -105,6 +108,18 @@ const GameOver = () => {
 
                     <div className="flex flex-col gap-3 sm:gap-4 w-full">
                         <Button
+                            onClick={() => setShowSubmissionModal(true)}
+                            disabled={scoreSubmitted}
+                            className={`w-full text-sm sm:text-base font-bold ${
+                                scoreSubmitted 
+                                    ? 'bg-green-600 cursor-not-allowed' 
+                                    : 'bg-purple-600 hover:bg-purple-700'
+                            }`}
+                        >
+                            {scoreSubmitted ? '✅ Score Submitted!' : '🏆 Submit to Leaderboard'}
+                        </Button>
+                        
+                        <Button
                             onClick={handlePlayAgain}
                             className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base font-bold"
                         >
@@ -119,6 +134,18 @@ const GameOver = () => {
                         </Button>
                     </div>
                 </div>
+
+                {/* Leaderboard Submission Modal for Singleplayer */}
+                <LeaderboardSubmissionModal
+                    isOpen={showSubmissionModal}
+                    onClose={() => setShowSubmissionModal(false)}
+                    score={14} // Perfect score for completing the game
+                    timeInMilliseconds={state.completionTime}
+                    onSuccess={() => {
+                        setScoreSubmitted(true);
+                        setShowSubmissionModal(false);
+                    }}
+                />
             </div>
         );
     }
@@ -175,6 +202,7 @@ const GameOver = () => {
                     </Button>
                 </div>
             </div>
+
         </div>
     );
 };

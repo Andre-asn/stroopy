@@ -30,7 +30,16 @@ redis.on('connect', () => {
 });
 
 redis.on('error', (error) => {
-	console.error('❌ Redis connection error:', error);
+	console.warn('⚠️ Redis connection error:', error);
+	console.warn('⚠️ Application will continue without Redis caching');
+});
+
+redis.on('close', () => {
+	console.warn('⚠️ Redis connection closed');
+});
+
+redis.on('reconnecting', () => {
+	console.log('🔄 Attempting to reconnect to Redis...');
 });
 
 // Graceful shutdown

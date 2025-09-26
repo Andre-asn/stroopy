@@ -34,8 +34,12 @@ router.post('/submit-score', authenticateToken, async (req: AuthRequest, res) =>
 
 		await entry.save();
 
-		// Update Redis cache for fast leaderboard queries
-		await updateLeaderboardCache();
+		// Update Redis cache for fast leaderboard queries (with error handling)
+		try {
+			await updateLeaderboardCache();
+		} catch (redisError) {
+			console.warn('Could not update Redis cache:', redisError);
+		}
 
 		res.status(201).json({
 			message: 'Score submitted successfully',
@@ -58,9 +62,14 @@ router.get('/top-scores', async (req, res) => {
 		const { limit = 50 } = req.query;
 		const limitNum = Math.min(parseInt(limit as string) || 50, 100); // Max 100 entries
 
-		// Try to get from Redis cache first
-		const cacheKey = `leaderboard:singleplayer:top-${limitNum}`;
-		const cachedData = await redis.get(cacheKey);
+		// Try to get from Redis cache first (with error handling)
+		let cachedData = null;
+		try {
+			const cacheKey = `leaderboard:singleplayer:top-${limitNum}`;
+			cachedData = await redis.get(cacheKey);
+		} catch (redisError) {
+			console.warn('Redis cache unavailable, using database only:', redisError);
+		}
 
 		if (cachedData) {
 			return res.json({
@@ -82,8 +91,13 @@ router.get('/top-scores', async (req, res) => {
 			rank: index + 1
 		}));
 
-		// Cache for 5 minutes
-		await redis.setex(cacheKey, 300, JSON.stringify(leaderboardWithRanks));
+		// Try to cache for 5 minutes (with error handling)
+		try {
+			const cacheKey = `leaderboard:singleplayer:top-${limitNum}`;
+			await redis.setex(cacheKey, 300, JSON.stringify(leaderboardWithRanks));
+		} catch (redisError) {
+			console.warn('Could not cache leaderboard data:', redisError);
+		}
 
 		res.json({
 			leaderboard: leaderboardWithRanks,
@@ -173,6 +187,7 @@ async function updateLeaderboardCache(): Promise<void> {
 		}
 	} catch (error) {
 		console.error('Update leaderboard cache error:', error);
+		throw error; // Re-throw so the calling function knows Redis failed
 	}
 }
 
