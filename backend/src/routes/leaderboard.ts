@@ -80,7 +80,7 @@ router.get('/top-scores', async (req, res) => {
 
 		// If not in cache, get from database
 		const leaderboard = await LeaderboardEntry.find({ gameMode: 'singleplayer' })
-			.sort({ score: -1, date: -1 }) // Highest score first, then most recent
+			.sort({ score: -1 }) // Highest score first
 			.limit(limitNum)
 			.select('username score timeInMilliseconds date')
 			.lean();
@@ -172,7 +172,7 @@ async function updateLeaderboardCache(): Promise<void> {
 		const sizes = [10, 25, 50, 100];
 		for (const size of sizes) {
 			const leaderboard = await LeaderboardEntry.find({ gameMode: 'singleplayer' })
-				.sort({ score: -1, date: -1 })
+				.sort({ score: -1 })
 				.limit(size)
 				.select('username score timeInMilliseconds date')
 				.lean();
