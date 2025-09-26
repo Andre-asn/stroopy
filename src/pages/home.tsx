@@ -62,7 +62,7 @@ const Home = () => {
             {/* User Authentication Section */}
             <div className="z-10 mb-4 sm:mb-6">
                 {user ? (
-                    <div className="flex items-center gap-4 text-white">
+                    <div className="flex items-center gap-4 text-black">
                         <span className="text-sm sm:text-base">Welcome, {user.username}!</span>
                         <Button
                             onClick={handleLogout}
@@ -78,7 +78,7 @@ const Home = () => {
                         onClick={handleAuthClick}
                         variant="outline"
                         size="sm"
-                        className="text-xs sm:text-sm text-white border-white hover:bg-white hover:text-black"
+                        className="text-xs sm:text-sm text-black border-white hover:bg-white hover:text-black"
                     >
                         Sign Up / Sign In
                     </Button>
