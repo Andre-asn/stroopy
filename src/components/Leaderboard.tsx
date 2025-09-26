@@ -133,8 +133,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 										</div>
 									</div>
 									<div className="text-right">
-										<div className="font-bold text-lg text-green-600">{entry.score} pts</div>
-										<div className="text-sm text-gray-500">{formatTime(entry.timeInMilliseconds)}</div>
+										<div className="font-bold text-lg text-blue-600">{formatTime(entry.timeInMilliseconds)}</div>
+										<div className="text-sm text-gray-500">Completion Time</div>
 									</div>
 								</div>
 							))}

@@ -116,11 +116,11 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 					<div className="mb-6">
 						<div className="bg-gray-100 rounded-lg p-4 mb-4">
 							<div className="text-center">
-								<div className="text-3xl font-bold text-green-600 mb-2">
-									{score} points
+								<div className="text-3xl font-bold text-blue-600 mb-2">
+									{formatTime(timeInMilliseconds)}
 								</div>
 								<div className="text-lg text-gray-600">
-									Time: {formatTime(timeInMilliseconds)}
+									Completion Time
 								</div>
 							</div>
 						</div>
