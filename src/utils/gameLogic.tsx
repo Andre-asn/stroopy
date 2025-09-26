@@ -1,8 +1,8 @@
 export const COLORS = {
-	RED: '#B91C1C', // Changed from #DC2626 to a slightly darker but still vibrant red
+	RED: '#B91C1C',
 	BLUE: '#3B82F6',
 	GREEN: '#22C55E',
-	YELLOW: '#F59E0B', 
+	YELLOW: '#FFEA00', 
 	PURPLE: '#A855F7',
 	ORANGE: '#EA580C', 
 	WHITE: '#FFFFFF',
