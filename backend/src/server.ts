@@ -60,14 +60,30 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Configure CORS middleware
-app.use(
-    cors({
-      origin: "https://stroopy.vercel.app",
-      methods: ["GET", "POST", "PUT", "DELETE"],
-      credentials: true,
-    })
-  );
-  
+// In server.ts, replace your current CORS config with this:
+// Replace lines 64-84 with:
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+      "http://localhost:5173",
+      "http://172.24.192.159:5173", 
+      "https://stroopy.vercel.app"
+    ];
+    
+    if (origin && allowedOrigins.includes(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+    }
+    
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+    
 // Routes
 app.all("/api/auth/*", toNodeHandler(auth));
 app.use(express.json());
