@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
-import { useAuth } from '../contexts/AuthContext';
 import AuthModal from './AuthModal';
+import { useSession } from '../lib/authClient';
 
 interface LeaderboardSubmissionModalProps {
 	isOpen: boolean;
@@ -24,7 +24,7 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 	const [success, setSuccess] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
 
-	const { user, token } = useAuth();
+	const { data: session } = useSession();
 
 	// Get backend URL
 	const getBackendUrl = () => {
@@ -35,7 +35,7 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 	};
 
 	const handleSubmitScore = async () => {
-		if (!user || !token) {
+		if (!session) {
 			setShowAuthModal(true);
 			return;
 		}
@@ -48,8 +48,8 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${token}`
 				},
+                credentials: 'include',
 				body: JSON.stringify({
 					score,
 					timeInMilliseconds
@@ -137,10 +137,10 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 						</div>
 					)}
 
-					{user ? (
+					{session ? (
 						<div className="space-y-4">
 							<p className="text-gray-600">
-								Submit your score as <strong>{user.username}</strong>?
+								Submit your score as <strong>{session.user.username}</strong>?
 							</p>
 							<div className="flex gap-3">
 								<Button

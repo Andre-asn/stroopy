@@ -1,17 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import MenuBackground from '../components/menuBackground';
-import { useAuth } from '../contexts/AuthContext';
-import AuthModal from '../components/AuthModal';
-import Leaderboard from '../components/Leaderboard';
+import MenuBackground from '@/components/menuBackground';
+import AuthModal from '@/components/AuthModal';
+import { useSession, authClient } from '@/lib/authClient';
 
 const Home = () => {
     const navigate = useNavigate();
     const [titleColor, setTitleColor] = useState('#FFFFFF');
-    const [showAuthModal, setShowAuthModal] = useState(false);
-    const [showLeaderboard, setShowLeaderboard] = useState(false);
-    const { user, logout } = useAuth();
+    const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+    const { data: session, isPending } = useSession();
 
     useEffect(() => {
         document.title = "Stroopy - Stroop Effect Game"
@@ -40,101 +38,92 @@ const Home = () => {
         navigate('/HowTo');
     }
 
-    const handleAuthClick = () => {
-        setShowAuthModal(true);
-    }
+    const handleLogout = async () => {
+        await authClient.signOut();
+    };
 
-    const handleLogout = () => {
-        logout();
-    }
+    const handleAuthSuccess = () => {
+        console.log('Authentication successful!');
+    };
 
     return (
-        <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
-            <MenuBackground />
+        <>
+            <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
+                <MenuBackground />
 
-            <h1
-                className="bg-black text-4xl sm:text-6xl font-bold z-10 mt-4 sm:mt-8 mb-4 sm:mb-8 p-2 sm:p-4"
-                style={{ color: titleColor, transition: "color 3s ease" }}
-            >
-                Stroopy
-            </h1>
-
-            {/* User Authentication Section */}
-            <div className="z-10 mb-4 sm:mb-6">
-                {user ? (
-                    <div className="flex items-center gap-4 text-black">
-                        <span className="text-white text-sm sm:text-base">Welcome, {user.username}!</span>
+                {/* Auth Status */}
+                <div className="absolute top-4 right-4 z-10">
+                    {isPending ? (
+                        <p className="text-gray-400 text-sm">Loading...</p>
+                    ) : session ? (
+                        <div className="flex items-center gap-2">
+                            <span className="text-white text-sm">
+                                Welcome, {session.user.username}!
+                            </span>
+                            <Button
+                                onClick={handleLogout}
+                                className="bg-red-600 hover:bg-red-700 text-xs"
+                                size="sm"
+                            >
+                                Logout
+                            </Button>
+                        </div>
+                    ) : (
                         <Button
-                            onClick={handleLogout}
-                            variant="outline"
+                            onClick={() => setIsAuthModalOpen(true)}
+                            className="bg-blue-600 hover:bg-blue-700 text-xs"
                             size="sm"
-                            className="text-xs sm:text-sm"
                         >
-                            Logout
+                            Login / Sign Up
                         </Button>
-                    </div>
-                ) : (
+                    )}
+                </div>
+
+                <h1
+                    className="bg-black text-4xl sm:text-6xl font-bold z-10 mt-4 sm:mt-8 mb-4 sm:mb-8 p-2 sm:p-4"
+                    style={{ color: titleColor, transition: "color 3s ease" }}
+                >
+                    Stroopy
+                </h1>
+                <div className="inline-flex gap-2 sm:gap-4 z-10"> 
                     <Button
-                        onClick={handleAuthClick}
-                        variant="outline"
-                        size="sm"
-                        className="text-xs sm:text-sm text-black border-white hover:bg-white hover:text-black"
+                        className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-green-700"
+                        size="lg"
+                        onClick={handleSingle}
                     >
-                        Sign Up / Sign In
+                        Single
                     </Button>
-                )}
-            </div>
-            <div className="inline-flex gap-2 sm:gap-4 z-10"> 
-                <Button
-                    className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-green-700"
-                    size="lg"
-                    onClick={handleSingle}
-                >
-                    Single
-                </Button>
-                <Button
-                    className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-orange-500"
-                    size="lg"
-                    onClick={handleVersus}
-                >
-                    Versus
-                </Button>
-                <Button
-                    className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-yellow-500"
-                    size="lg"
-                    onClick={handleHowTo}
-                >
-                    ?
-                </Button>
-                <Button
-                    className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-purple-600"
-                    size="lg"
-                    onClick={() => setShowLeaderboard(true)}
-                >
-                    🏆
-                </Button>
+                    <Button
+                        className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-orange-500"
+                        size="lg"
+                        onClick={handleVersus}
+                    >
+                        Versus
+                    </Button>
+                    <Button
+                        className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-yellow-500"
+                        size="lg"
+                        onClick={handleHowTo}
+                    >
+                        ?
+                    </Button>
+                </div>
+
+                <div className="absolute bottom-8 sm:bottom-14 text-center text-gray-500 text-xs z-10">
+                    <p>Stroopy v0.4</p>
+                    <p>Created by [Andre Santiago-Neyra]</p>
+                    <p><a href="https://github.com/Andre-asn" className="hover:text-gray-300 underline" target="_blank" rel="noopener noreferrer">GitHub</a> | <a href="mailto:andresanti.asn@gmail.com" className="hover:text-gray-300 underline">Contact</a></p>
+                </div>
             </div>
 
-            <div className="absolute bottom-8 sm:bottom-14 text-center text-gray-500 text-xs z-10">
-                <p>Stroopy v0.7</p>
-                <p>Created by [Andre Santiago-Neyra]</p>
-                <p><a href="https://github.com/Andre-asn" className="hover:text-gray-300 underline" target="_blank" rel="noopener noreferrer">GitHub</a></p>
-            </div>
-
-            <AuthModal 
-                isOpen={showAuthModal}
-                onClose={() => setShowAuthModal(false)}
-                onSuccess={() => {
-                    // Optional: Show success message or redirect
-                }}
+            {/* Auth Modal */}
+            <AuthModal
+                isOpen={isAuthModalOpen}
+                onClose={() => setIsAuthModalOpen(false)}
+                onSuccess={handleAuthSuccess}
             />
-
-            <Leaderboard 
-                isOpen={showLeaderboard}
-                onClose={() => setShowLeaderboard(false)}
-            />
-        </div>
+        </>
     );
 };
 
-export default Home; 
+export default Home;

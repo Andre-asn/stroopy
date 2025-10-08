@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { useAuth } from '../contexts/AuthContext';
+import { authClient } from '../lib/authClient';
 
 interface AuthModalProps {
 	isOpen: boolean;
@@ -18,8 +18,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const { login, register } = useAuth();
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setLoading(true);
@@ -27,7 +25,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
 		try {
 			if (isLogin) {
-				await login(email, password);
+				await authClient.signIn.username({
+                    username: username,
+                    password: password
+                });
 			} else {
 				if (password !== confirmPassword) {
 					throw new Error('Passwords do not match');
@@ -35,7 +36,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 				if (password.length < 6) {
 					throw new Error('Password must be at least 6 characters');
 				}
-				await register(email, username, password);
+                if (username.length < 3 || username.length > 20) {
+                    throw new Error('Username must be between 3 and 20 characters');
+                }
+
+                const { data: res, error } = await authClient.isUsernameAvailable({
+                    username: username
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                if (!res?.available) {
+                    throw new Error('Username already exists');
+                }
+
+				await authClient.signUp.email({
+                    email: email,
+                    name: username,
+                    password: password,
+                    username: username,
+                });
 			}
 			onSuccess?.();
 			onClose();

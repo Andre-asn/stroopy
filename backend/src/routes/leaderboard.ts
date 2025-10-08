@@ -1,5 +1,5 @@
 import express from 'express';
-import { LeaderboardEntry, ILeaderboardEntry } from '../models/LeaderboardEntry';
+import { LeaderboardEntry } from '../models/LeaderboardEntry';
 import { fromNodeHeaders } from 'better-auth/node'; 
 import { auth } from '../lib/auth'; 
 import { redis } from '../lib/redis';
@@ -155,66 +155,6 @@ router.get('/top-scores', async (req, res) => {
 	} catch (error) {
 		console.error('Get leaderboard error:', error);
 		res.status(500).json({ error: 'Internal server error' });
-	}
-});
-
-// Clean up duplicate entries (keep only best score per user)
-router.post('/cleanup-duplicates', async (req, res) => {
-	try {
-		console.log('Starting cleanup of duplicate leaderboard entries...');
-		
-		// Get all entries grouped by userId
-		const entries = await LeaderboardEntry.find({ gameMode: 'singleplayer' }).lean();
-		const userEntries = new Map();
-		
-		// Group entries by userId
-		entries.forEach(entry => {
-			const userId = entry.userId.toString();
-			if (!userEntries.has(userId)) {
-				userEntries.set(userId, []);
-			}
-			userEntries.get(userId).push(entry);
-		});
-		
-		let deletedCount = 0;
-		
-		// For each user, keep only their best (lowest time) entry
-		for (const [userId, userEntryList] of userEntries) {
-			if (userEntryList.length > 1) {
-				// Sort by time (lowest first)
-				userEntryList.sort((a: ILeaderboardEntry, b: ILeaderboardEntry) => a.timeInMilliseconds - b.timeInMilliseconds);
-				
-				// Keep the best entry, delete the rest
-				const bestEntry = userEntryList[0];
-				const entriesToDelete = userEntryList.slice(1);
-				
-				for (const entryToDelete of entriesToDelete) {
-					await LeaderboardEntry.deleteOne({ _id: entryToDelete._id });
-					deletedCount++;
-				}
-				
-				console.log(`User ${bestEntry.username}: kept best time ${bestEntry.timeInMilliseconds}ms, deleted ${entriesToDelete.length} duplicates`);
-			}
-		}
-		
-		// Clear Redis cache to force refresh
-		try {
-			await redis.del('leaderboard:singleplayer:top-50');
-			console.log('Cleared Redis cache');
-		} catch (redisError) {
-			console.warn('Could not clear Redis cache:', redisError);
-		}
-		
-		console.log(`Cleanup complete: deleted ${deletedCount} duplicate entries`);
-		
-		res.json({
-			message: 'Cleanup completed successfully',
-			deletedCount,
-			remainingUsers: userEntries.size
-		});
-	} catch (error) {
-		console.error('Cleanup error:', error);
-		res.status(500).json({ error: 'Internal server error during cleanup' });
 	}
 });
 
