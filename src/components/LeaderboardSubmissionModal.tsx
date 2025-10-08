@@ -66,7 +66,12 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 				onClose();
 			}, 2000);
 		} else {
-			throw new Error(data.error || 'Failed to submit score');
+			// Handle specific error for not beating best time
+			if (data.error && data.error.includes('beat your current best time')) {
+				setError(`You need to beat your current best time to submit a new score. Your current best: ${data.currentBestTime ? formatTime(data.currentBestTime) : 'unknown'}`);
+			} else {
+				throw new Error(data.error || 'Failed to submit score');
+			}
 		}
 		} catch (error: any) {
 			setError(error.message);
