@@ -61,7 +61,7 @@ const Home = () => {
                         <p className="text-gray-400 text-sm">Loading...</p>
                     ) : session ? (
                         <div className="flex items-center gap-4 text-black">
-                            <span className="text-white text-sm sm:text-base">Welcome, {session.user.username}!</span>
+                            <span className="text-white text-sm sm:text-base">Welcome, {session.user.name}!</span>
                             <Button
                                 onClick={handleLogout}
                                 variant="outline"

@@ -74,7 +74,7 @@ router.post('/submit-score', async (req, res) => {
 			// Create new leaderboard entry
 			const entry = new LeaderboardEntry({
 				userId: user.id,
-				username: user.username,
+				username: user.name,
 				score,
 				timeInMilliseconds,
 				gameMode: 'singleplayer'
@@ -100,7 +100,7 @@ router.post('/submit-score', async (req, res) => {
 			});
 		}
 	} catch (error) {
-		console.error('Submit score error:', error);
+		console.error('Submit score', error);
 		res.status(500).json({ error: 'Internal server error' });
 	}
 });

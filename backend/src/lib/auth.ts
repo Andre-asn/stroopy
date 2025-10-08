@@ -1,12 +1,12 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
-import { db } from "./db";
-import { username } from "better-auth/plugins"
+import { db, default as client } from "./db.js";
 
 export const auth = betterAuth({
-  plugins: [username()],
-  database: mongodbAdapter(db),
+  database: mongodbAdapter(db, {
+    client
+  }),
   emailAndPassword: { 
     enabled: true, 
-  }, 
+  }
 });

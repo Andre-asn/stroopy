@@ -23,7 +23,6 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
-
 	const { data: session } = useSession();
 
 	// Get backend URL
@@ -140,7 +139,7 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 					{session ? (
 						<div className="space-y-4">
 							<p className="text-gray-600">
-								Submit your score as <strong>{session.user.username}</strong>?
+								Submit your score as <strong>{session.user.name}</strong>?
 							</p>
 							<div className="flex gap-3">
 								<Button

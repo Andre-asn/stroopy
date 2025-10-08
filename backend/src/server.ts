@@ -1,9 +1,11 @@
+import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { auth } from './lib/auth';
+import { auth } from './lib/auth.js';
+import mongoose from 'mongoose';
 import { toNodeHandler } from 'better-auth/node';
 import leaderboardRoutes from './routes/leaderboard';
 
@@ -57,18 +59,19 @@ const COLOR_NAMES = Object.keys(COLORS);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+app.use(cors({
+    origin: [
+      "http://localhost:5173",
+      "http://172.24.192.159:5173", 
+      "https://stroopy.vercel.app"
+    ],
+    credentials: true
+  }));
 
 // Routes
 app.all("/api/auth/*", toNodeHandler(auth));
-app.use('/api/leaderboard', leaderboardRoutes);
-
 app.use(express.json());
-
-app.listen(PORT, () => {
-    console.log(`Stroopy powered by Better Auth listening on port ${PORT}`);
-});
+app.use('/api/leaderboard', leaderboardRoutes);
 
 
 const httpServer = createServer(app);
@@ -83,6 +86,10 @@ const io = new Server(httpServer, {
     credentials: true
   }
 });
+
+mongoose.connect(process.env.MONGODB_URI!)
+  .then(() => console.log('✅ Mongoose connected to MongoDB'))
+  .catch((error) => console.error('❌ Mongoose connection error:', error));
 
 // Store active game rooms
 const gameRooms = new Map<string, GameRoom>();
@@ -527,5 +534,5 @@ io.on('connection', (socket: Socket) => {
 });
 
 httpServer.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Stroopy powered by Better Auth listening on port ${PORT}`);
 });

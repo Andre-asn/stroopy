@@ -25,39 +25,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
 		try {
 			if (isLogin) {
-				await authClient.signIn.username({
-                    username: username,
+				await authClient.signIn.email({
+                    email: email,
                     password: password
                 });
 			} else {
 				if (password !== confirmPassword) {
 					throw new Error('Passwords do not match');
 				}
-				if (password.length < 6) {
-					throw new Error('Password must be at least 6 characters');
-				}
+
                 if (username.length < 3 || username.length > 20) {
                     throw new Error('Username must be between 3 and 20 characters');
                 }
 
-                const { data: res, error } = await authClient.isUsernameAvailable({
-                    username: username
-                });
-
-                if (error) {
-                    throw new Error(error.message);
-                }
-
-                if (!res?.available) {
-                    throw new Error('Username already exists');
-                }
-
-				await authClient.signUp.email({
+				const { error } = await authClient.signUp.email({
                     email: email,
                     name: username,
                     password: password,
-                    username: username,
                 });
+
+				if (error) {
+					throw new Error(error.message);
+				}
 			}
 			onSuccess?.();
 			onClose();
