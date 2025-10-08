@@ -1,15 +1,25 @@
 import express from 'express';
 import { LeaderboardEntry, ILeaderboardEntry } from '../models/LeaderboardEntry';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
-import { redis } from '../config/database';
+import { fromNodeHeaders } from 'better-auth/node'; 
+import { auth } from '../lib/auth'; 
+import { redis } from '../lib/redis';
 
 const router = express.Router();
 
 // Submit score to leaderboard
-router.post('/submit-score', authenticateToken, async (req: AuthRequest, res) => {
+router.post('/submit-score', async (req, res) => {
 	try {
+		// Get session directly using Better Auth
+		const session = await auth.api.getSession({
+			headers: fromNodeHeaders(req.headers)
+		});
+
+		if (!session) {
+			return res.status(401).json({ error: 'Authentication required' });
+		}
+
 		const { score, timeInMilliseconds } = req.body;
-		const user = req.user!;
+		const user = session.user; // This is the Better Auth user object
 
 		if (!score || !timeInMilliseconds) {
 			return res.status(400).json({ error: 'Score and time are required' });
@@ -25,7 +35,7 @@ router.post('/submit-score', authenticateToken, async (req: AuthRequest, res) =>
 
 		// Check if user already has a score
 		const existingEntry = await LeaderboardEntry.findOne({
-			userId: user._id as any,
+			userId: user.id, // user.id is a string from Better Auth
 			gameMode: 'singleplayer'
 		});
 
@@ -57,13 +67,13 @@ router.post('/submit-score', authenticateToken, async (req: AuthRequest, res) =>
 					score: existingEntry.score,
 					timeInMilliseconds: existingEntry.timeInMilliseconds,
 					date: existingEntry.date,
-					rank: await getPlayerRank((user._id as any).toString())
+					rank: await getPlayerRank(user.id)
 				}
 			});
 		} else {
 			// Create new leaderboard entry
 			const entry = new LeaderboardEntry({
-				userId: user._id as any,
+				userId: user.id,
 				username: user.username,
 				score,
 				timeInMilliseconds,
@@ -85,7 +95,7 @@ router.post('/submit-score', authenticateToken, async (req: AuthRequest, res) =>
 					score: entry.score,
 					timeInMilliseconds: entry.timeInMilliseconds,
 					date: entry.date,
-					rank: await getPlayerRank((user._id as any).toString())
+					rank: await getPlayerRank(user.id)
 				}
 			});
 		}
@@ -95,7 +105,7 @@ router.post('/submit-score', authenticateToken, async (req: AuthRequest, res) =>
 	}
 });
 
-// Get leaderboard
+// Get leaderboard (no auth required)
 router.get('/top-scores', async (req, res) => {
 	try {
 		const { limit = 50 } = req.query;
@@ -209,21 +219,30 @@ router.post('/cleanup-duplicates', async (req, res) => {
 });
 
 // Get user's best score and rank
-router.get('/my-stats', authenticateToken, async (req: AuthRequest, res) => {
+router.get('/my-stats', async (req, res) => {
 	try {
-		const user = req.user!;
+		// Get session directly using Better Auth
+		const session = await auth.api.getSession({
+			headers: fromNodeHeaders(req.headers)
+		});
+
+		if (!session) {
+			return res.status(401).json({ error: 'Authentication required' });
+		}
+
+		const user = session.user;
 
 		// Get user's best score
-		const bestScore = await LeaderboardEntry.findOne({ userId: user._id as any })
+		const bestScore = await LeaderboardEntry.findOne({ userId: user.id })
 			.sort({ score: -1 })
 			.select('score timeInMilliseconds date')
 			.lean();
 
 		// Get user's rank
-		const rank = await getPlayerRank((user._id as any).toString());
+		const rank = await getPlayerRank(user.id);
 
 		// Get user's total games played
-		const totalGames = await LeaderboardEntry.countDocuments({ userId: user._id as any });
+		const totalGames = await LeaderboardEntry.countDocuments({ userId: user.id });
 
 		res.json({
 			bestScore: bestScore || null,

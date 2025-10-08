@@ -3,8 +3,8 @@ import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { connectMongoDB } from './config/database';
-import authRoutes from './routes/auth';
+import { auth } from './lib/auth';
+import { toNodeHandler } from 'better-auth/node';
 import leaderboardRoutes from './routes/leaderboard';
 
 // Load environment variables
@@ -55,22 +55,21 @@ const COLORS = {
 const COLOR_NAMES = Object.keys(COLORS);
 
 const app = express();
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-
-// Connect to database
-connectMongoDB();
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.all("/api/auth/*", toNodeHandler(auth));
 app.use('/api/leaderboard', leaderboardRoutes);
 
-// Add a basic route handler
-app.get('/', (req, res) => {
-  res.send('Stroopy game server is running!');
+app.use(express.json());
+
+app.listen(PORT, () => {
+    console.log(`Stroopy powered by Better Auth listening on port ${PORT}`);
 });
+
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
@@ -527,7 +526,6 @@ io.on('connection', (socket: Socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3001;
 httpServer.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
