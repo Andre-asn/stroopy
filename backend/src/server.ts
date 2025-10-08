@@ -59,15 +59,15 @@ const COLOR_NAMES = Object.keys(COLORS);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({
-    origin: [
-      "http://localhost:5173",
-      "http://172.24.192.159:5173", 
-      "https://stroopy.vercel.app"
-    ],
-    credentials: true
-  }));
-
+// Configure CORS middleware
+app.use(
+    cors({
+      origin: "https://stroopy.vercel.app",
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      credentials: true,
+    })
+  );
+  
 // Routes
 app.all("/api/auth/*", toNodeHandler(auth));
 app.use(express.json());
