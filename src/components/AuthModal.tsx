@@ -25,10 +25,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 
 		try {
 			if (isLogin) {
-				await authClient.signIn.email({
+				const { error } = await authClient.signIn.email({
                     email: email,
                     password: password
                 });
+
+				if (error) {
+					throw new Error(error.message);
+				}
 			} else {
 				if (password !== confirmPassword) {
 					throw new Error('Passwords do not match');
