@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import AuthModal from './AuthModal';
-import { useAuth } from '../contexts/AuthContext';
+import { useSession } from '../lib/authClient';
 
 interface LeaderboardSubmissionModalProps {
 	isOpen: boolean;
@@ -23,7 +23,7 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
-	const { session, refetch } = useAuth();
+	const { data: session } = useSession();
 
 	// Get backend URL
 	const getBackendUrl = () => {
@@ -194,7 +194,6 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 				onClose={() => setShowAuthModal(false)}
 				onSuccess={() => {
 					setShowAuthModal(false);
-					refetch(); // Refresh session state
 					// Automatically try to submit score after successful auth
 					setTimeout(() => {
 						handleSubmitScore();

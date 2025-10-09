@@ -9,7 +9,6 @@ import { auth } from './lib/auth';
 import mongoose from 'mongoose';
 import { toNodeHandler } from 'better-auth/node';
 import leaderboardRoutes from './routes/leaderboard';
-import authRoutes from './routes/auth';
 
 // Load environment variables
 dotenv.config();
@@ -61,16 +60,12 @@ const COLOR_NAMES = Object.keys(COLORS);
 const app = express();
 const PORT = 3000;
 
-// Configure CORS middleware
+// Configure CORS middleware - Allow all origins for better-auth compatibility
 app.use(
     cors({
-      origin: [
-        "https://stroopy.vercel.app", 
-        "http://localhost:5174",
-        "http://localhost:5173"
-      ],
+      origin: true, // Allow all origins
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+      allowedHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
       credentials: true,
       preflightContinue: false,
       optionsSuccessStatus: 200
@@ -83,7 +78,6 @@ app.use(cookieParser());
 // Routes
 app.all("/api/auth/*", toNodeHandler(auth));
 app.use(express.json());
-app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/leaderboard', leaderboardRoutes);
 
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { signIn, signUp } from '../lib/authClient';
 
 interface AuthModalProps {
 	isOpen: boolean;
@@ -23,24 +24,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 		setError(null);
 
 		try {
-			const backendURL = import.meta.env.VITE_PROD_SERVER_URL || "http://localhost:3000";
-			
 			if (isLogin) {
-				const response = await fetch(`${backendURL}/api/v1/auth/sessions`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					credentials: 'include',
-					body: JSON.stringify({
-						email: email,
-						password: password,
-					}),
+				const { error } = await signIn.email({
+					email: email,
+					password: password
 				});
 
-				if (!response.ok) {
-					const data = await response.json();
-					throw new Error(data.error || 'Sign in failed');
+				if (error) {
+					throw new Error(error.message);
 				}
 			} else {
 				if (password !== confirmPassword) {
@@ -51,22 +42,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 					throw new Error('Username must be between 3 and 20 characters');
 				}
 
-				const response = await fetch(`${backendURL}/api/v1/auth/users`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					credentials: 'include',
-					body: JSON.stringify({
-						email: email,
-						name: username,
-						password: password,
-					}),
+				const { error } = await signUp.email({
+					email: email,
+					name: username,
+					password: password,
 				});
 
-				if (!response.ok) {
-					const data = await response.json();
-					throw new Error(data.error || 'Sign up failed');
+				if (error) {
+					throw new Error(error.message);
 				}
 			}
 			onSuccess?.();
