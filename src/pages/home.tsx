@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import MenuBackground from '@/components/menuBackground';
-// import { signOut, useSession } from '@/lib/authClient'; // Disabled during maintenance
+import { signOut, useSession } from '@/lib/authClient';
 import AuthModal from '@/components/AuthModal';
+import Leaderboard from '@/components/Leaderboard';
 
 const Home = () => {
     const navigate = useNavigate();
     const [titleColor, setTitleColor] = useState('#FFFFFF');
     const [showAuthModal, setShowAuthModal] = useState(false);
-    // const { data: session, isPending } = useSession(); // Disabled during maintenance
+    const [showLeaderboard, setShowLeaderboard] = useState(false);
+    const { data: session, isPending } = useSession();
 
     useEffect(() => {
         document.title = "Stroopy - Stroop Effect Game"
@@ -38,9 +40,9 @@ const Home = () => {
         navigate('/HowTo');
     }
 
-    // const handleLogout = async () => {
-    //     await signOut();
-    // } // Disabled during maintenance
+    const handleLogout = async () => {
+        await signOut();
+    }
 
     return (
         <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
@@ -53,12 +55,32 @@ const Home = () => {
                 Stroopy
             </h1>
 
-            {/* Maintenance Notice */}
+            {/* User Authentication Section */}
             <div className="z-10 mb-4 sm:mb-6">
-                <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg text-center">
-                    <p className="text-sm font-medium">⚠️ Authentication & Leaderboard Under Maintenance</p>
-                    <p className="text-xs mt-1">These features are temporarily unavailable while we fix some issues.</p>
-                </div>
+                {isPending ? (
+                        <p className="text-gray-400 text-sm">Loading...</p>
+                    ) : session ? (
+                        <div className="flex items-center gap-4 text-black">
+                            <span className="text-white text-sm sm:text-base">Welcome, {session.user.name}!</span>
+                            <Button
+                                onClick={handleLogout}
+                                variant="outline"
+                                size="sm"
+                                className="text-xs sm:text-sm"
+                            >
+                                Logout
+                            </Button>
+                        </div>
+                ) : (
+                    <Button
+                        onClick={() => setShowAuthModal(true)}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs sm:text-sm text-black border-white hover:bg-white hover:text-black"
+                    >
+                        Sign Up / Sign In
+                    </Button>
+                )}
             </div>
             <div className="inline-flex gap-2 sm:gap-4 z-10"> 
                 <Button
@@ -83,10 +105,9 @@ const Home = () => {
                     ?
                 </Button>
                 <Button
-                    className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-purple-600 opacity-50 cursor-not-allowed"
+                    className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-purple-600"
                     size="lg"
-                    disabled
-                    title="Leaderboard temporarily unavailable"
+                    onClick={() => setShowLeaderboard(true)}
                 >
                     🏆
                 </Button>
@@ -103,6 +124,10 @@ const Home = () => {
                 onClose={() => setShowAuthModal(false)}
             />
 
+            <Leaderboard 
+                isOpen={showLeaderboard}
+                onClose={() => setShowLeaderboard(false)}
+            />
         </div>
     );
 };
