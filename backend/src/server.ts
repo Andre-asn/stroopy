@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
+import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { auth } from './lib/auth';
@@ -59,36 +60,18 @@ const COLOR_NAMES = Object.keys(COLORS);
 const app = express();
 const PORT = 3000;
 
-// Smart CORS proxy middleware - Dynamically set origin for credentials
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // List of allowed origins
-  const allowedOrigins = [
-    'https://stroopy.vercel.app',
-    'http://localhost:5174',
-    'http://localhost:3000'
-  ];
-  
-  // If origin is in allowed list, use it; otherwise use wildcard (for non-credential requests)
-  if (origin && allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-  } else {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Credentials', 'false');
-  }
-  
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie, X-Requested-With');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
+// Configure CORS middleware as recommended by Better Auth
+app.use(
+  cors({
+    origin: [
+      "https://stroopy.vercel.app",
+      "http://localhost:5174",
+      "http://localhost:3000"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
   
 // Middleware
 app.use(cookieParser());
@@ -98,8 +81,10 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Routes
+// Routes - Better Auth handler FIRST (before express.json())
 app.all("/api/auth/*", toNodeHandler(auth));
+
+// Mount express json middleware AFTER Better Auth handler
 app.use(express.json());
 app.use('/api/v1/leaderboard', leaderboardRoutes);
 
