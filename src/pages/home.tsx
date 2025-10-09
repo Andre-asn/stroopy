@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import MenuBackground from '@/components/menuBackground';
-import { useSession, authClient } from '@/lib/authClient';
+import { authClient } from '@/lib/authClient';
 import AuthModal from '@/components/AuthModal';
 import Leaderboard from '@/components/Leaderboard';
 
@@ -11,7 +11,7 @@ const Home = () => {
     const [titleColor, setTitleColor] = useState('#FFFFFF');
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showLeaderboard, setShowLeaderboard] = useState(false);
-    const { data: session, isPending } = useSession();
+    const { data: session, isPending } = authClient.useSession();
 
     useEffect(() => {
         document.title = "Stroopy - Stroop Effect Game"

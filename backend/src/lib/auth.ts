@@ -8,6 +8,8 @@ export const auth = betterAuth({
     enabled: true, 
   },
   trustedOrigins: [
-    "https://stroopy.vercel.app" 
+    "https://stroopy.vercel.app",
+    "http://localhost:5174",
+    "http://localhost:3000"
   ],
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import AuthModal from './AuthModal';
-import { useSession } from '../lib/authClient';
+import { authClient } from '../lib/authClient';
 
 interface LeaderboardSubmissionModalProps {
 	isOpen: boolean;
@@ -23,7 +23,7 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
-	const { data: session } = useSession();
+	const { data: session } = authClient.useSession();
 
 	// Get backend URL
 	const getBackendUrl = () => {
