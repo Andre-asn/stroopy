@@ -4,10 +4,12 @@ import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import { auth } from './lib/auth';
 import mongoose from 'mongoose';
 import { toNodeHandler } from 'better-auth/node';
 import leaderboardRoutes from './routes/leaderboard';
+import authRoutes from './routes/auth';
 
 // Load environment variables
 dotenv.config();
@@ -69,10 +71,14 @@ app.use(
     })
   );
   
+// Middleware
+app.use(cookieParser());
+
 // Routes
 app.all("/api/auth/*", toNodeHandler(auth));
 app.use(express.json());
-app.use('/api/leaderboard', leaderboardRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/leaderboard', leaderboardRoutes);
 
 
 const httpServer = createServer(app);

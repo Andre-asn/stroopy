@@ -32,7 +32,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ isOpen, onClose }) => {
 		setError(null);
 
 		try {
-			const response = await fetch(`${getBackendUrl()}/api/leaderboard/top-scores`);
+			const response = await fetch(`${getBackendUrl()}/api/v1/leaderboard/entries`);
 			const data = await response.json();
 
 			if (response.ok) {

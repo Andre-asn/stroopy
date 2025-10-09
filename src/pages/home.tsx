@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import MenuBackground from '@/components/menuBackground';
-import { authClient } from '@/lib/authClient';
+import { auth } from '@/lib/authClient';
+import { useAuth } from '@/contexts/AuthContext';
 import AuthModal from '@/components/AuthModal';
 import Leaderboard from '@/components/Leaderboard';
 
@@ -11,7 +12,7 @@ const Home = () => {
     const [titleColor, setTitleColor] = useState('#FFFFFF');
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showLeaderboard, setShowLeaderboard] = useState(false);
-    const { data: session, isPending } = authClient.useSession();
+    const { session, isPending, refetch } = useAuth();
 
     useEffect(() => {
         document.title = "Stroopy - Stroop Effect Game"
@@ -41,7 +42,8 @@ const Home = () => {
     }
 
     const handleLogout = async () => {
-        await authClient.signOut();
+        await auth.signOut();
+        refetch(); // Refresh session state after logout
     }
 
     return (
@@ -122,6 +124,7 @@ const Home = () => {
             <AuthModal 
                 isOpen={showAuthModal}
                 onClose={() => setShowAuthModal(false)}
+                onSuccess={refetch}
             />
 
             <Leaderboard 

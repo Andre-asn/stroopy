@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { authClient } from '../lib/authClient';
 
 interface AuthModalProps {
 	isOpen: boolean;
@@ -24,32 +23,50 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => 
 		setError(null);
 
 		try {
+			const backendURL = import.meta.env.VITE_PROD_SERVER_URL || "http://localhost:3000";
+			
 			if (isLogin) {
-				const { error } = await authClient.signIn.email({
-                    email: email,
-                    password: password
-                });
+				const response = await fetch(`${backendURL}/api/v1/auth/sessions`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					credentials: 'include',
+					body: JSON.stringify({
+						email: email,
+						password: password,
+					}),
+				});
 
-				if (error) {
-					throw new Error(error.message);
+				if (!response.ok) {
+					const data = await response.json();
+					throw new Error(data.error || 'Sign in failed');
 				}
 			} else {
 				if (password !== confirmPassword) {
 					throw new Error('Passwords do not match');
 				}
 
-                if (username.length < 3 || username.length > 20) {
-                    throw new Error('Username must be between 3 and 20 characters');
-                }
+				if (username.length < 3 || username.length > 20) {
+					throw new Error('Username must be between 3 and 20 characters');
+				}
 
-				const { error } = await authClient.signUp.email({
-                    email: email,
-                    name: username,
-                    password: password,
-                });
+				const response = await fetch(`${backendURL}/api/v1/auth/users`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					credentials: 'include',
+					body: JSON.stringify({
+						email: email,
+						name: username,
+						password: password,
+					}),
+				});
 
-				if (error) {
-					throw new Error(error.message);
+				if (!response.ok) {
+					const data = await response.json();
+					throw new Error(data.error || 'Sign up failed');
 				}
 			}
 			onSuccess?.();

@@ -6,8 +6,19 @@ import { redis } from '../lib/redis';
 
 const router = express.Router();
 
-// Submit score to leaderboard
-router.post('/submit-score', async (req, res) => {
+/**
+ * Leaderboard API Routes
+ * 
+ * Base URL: /api/v1/leaderboard
+ * 
+ * Endpoints:
+ * - POST /entries - Submit a new score entry (requires authentication)
+ * - GET /entries - Get top leaderboard entries (public)
+ * - GET /entries/me - Get current user's leaderboard statistics (requires authentication)
+ */
+
+// POST /api/v1/leaderboard/entries - Submit a new score entry
+router.post('/entries', async (req, res) => {
 	try {
 		// Get session directly using Better Auth
 		const session = await auth.api.getSession({
@@ -106,7 +117,8 @@ router.post('/submit-score', async (req, res) => {
 });
 
 // Get leaderboard (no auth required)
-router.get('/top-scores', async (req, res) => {
+// GET /api/v1/leaderboard/entries - Get top leaderboard entries
+router.get('/entries', async (req, res) => {
 	try {
 		const { limit = 50 } = req.query;
 		const limitNum = Math.min(parseInt(limit as string) || 50, 100); // Max 100 entries
@@ -159,7 +171,8 @@ router.get('/top-scores', async (req, res) => {
 });
 
 // Get user's best score and rank
-router.get('/my-stats', async (req, res) => {
+// GET /api/v1/leaderboard/entries/me - Get current user's leaderboard statistics
+router.get('/entries/me', async (req, res) => {
 	try {
 		// Get session directly using Better Auth
 		const session = await auth.api.getSession({
