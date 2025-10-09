@@ -64,10 +64,16 @@ const PORT = 3000;
 // Configure CORS middleware
 app.use(
     cors({
-      origin: ["https://stroopy.vercel.app", "http://localhost:5174"],
-      methods: ["GET", "POST", "PUT", "DELETE"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      origin: [
+        "https://stroopy.vercel.app", 
+        "http://localhost:5174",
+        "http://localhost:5173"
+      ],
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
       credentials: true,
+      preflightContinue: false,
+      optionsSuccessStatus: 200
     })
   );
   

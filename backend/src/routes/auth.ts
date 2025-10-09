@@ -4,6 +4,20 @@ import { APIError } from 'better-auth/api';
 
 const router = express.Router();
 
+// CORS middleware for auth routes
+router.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://stroopy.vercel.app');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 /**
  * Authentication API Routes
  * 
