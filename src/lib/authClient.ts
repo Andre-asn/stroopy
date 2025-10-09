@@ -4,6 +4,9 @@ const backendURL = import.meta.env.VITE_PROD_SERVER_URL || "http://localhost:300
 
 export const authClient = createAuthClient({
   baseURL: backendURL,
+  fetchOptions: {
+    credentials: "include",
+  },
 });
 
 // Export convenience methods

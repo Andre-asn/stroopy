@@ -4,7 +4,7 @@ import { createServer } from 'http';
 import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { auth } from './lib/auth.js';
+import { auth } from './lib/auth';
 import mongoose from 'mongoose';
 import { toNodeHandler } from 'better-auth/node';
 import leaderboardRoutes from './routes/leaderboard';
@@ -57,41 +57,20 @@ const COLORS = {
 const COLOR_NAMES = Object.keys(COLORS);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 3000;
 
 // Configure CORS middleware
 app.use(
     cors({
       origin: "https://stroopy.vercel.app",
       methods: ["GET", "POST", "PUT", "DELETE"],
+      allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true,
     })
   );
   
 // Routes
-app.all("/api/auth/*", (req, res, next) => {
-    const origin = req.headers.origin;
-    const allowedOrigins = [
-      "http://localhost:5173",
-      "https://stroopy.vercel.app"
-    ];
-  
-    if (origin && allowedOrigins.includes(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-    }
-  
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-  
-    if (req.method === "OPTIONS") {
-      return res.sendStatus(200);
-    }
-  
-    // Pass control to Better Auth's handler after setting headers
-    return toNodeHandler(auth)(req, res);
-  });
-
+app.all("/api/auth/*", toNodeHandler(auth));
 app.use(express.json());
 app.use('/api/leaderboard', leaderboardRoutes);
 
