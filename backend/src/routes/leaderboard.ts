@@ -1,8 +1,8 @@
 import express from 'express';
-import { LeaderboardEntry } from '../models/LeaderboardEntry';
+import { LeaderboardEntry } from '../models/LeaderboardEntry.js';
 import { fromNodeHeaders } from 'better-auth/node'; 
-import { auth } from '../lib/auth'; 
-import { redis } from '../lib/redis';
+import { auth } from '../lib/auth.js'; 
+import { redis } from '../lib/redis.js';
 
 const router = express.Router();
 

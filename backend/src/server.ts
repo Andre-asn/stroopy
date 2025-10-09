@@ -6,7 +6,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
-import leaderboardRoutes from './routes/leaderboard';
+import leaderboardRoutes from './routes/leaderboard.js';
 
 // Load environment variables
 dotenv.config();
@@ -26,7 +26,7 @@ app.use(
     })
   );
 
-import { auth } from './lib/auth';
+import { auth } from './lib/auth.js';
 import { toNodeHandler } from 'better-auth/node';
 
 // Middleware
