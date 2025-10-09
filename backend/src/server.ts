@@ -5,13 +5,63 @@ import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
-import { auth } from './lib/auth';
 import mongoose from 'mongoose';
-import { toNodeHandler } from 'better-auth/node';
 import leaderboardRoutes from './routes/leaderboard';
 
 // Load environment variables
 dotenv.config();
+
+const app = express();
+const PORT = 3000;
+
+app.use(
+    cors({
+      origin: [
+        "https://stroopy.vercel.app",
+        "http://localhost:5174",
+        "http://localhost:3000"
+      ],
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      credentials: true,
+    })
+  );
+
+import { auth } from './lib/auth';
+import { toNodeHandler } from 'better-auth/node';
+
+// Middleware
+app.use(cookieParser());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Routes - Better Auth handler FIRST (before express.json())
+app.all("/api/auth/*", toNodeHandler(auth));
+
+// Mount express json middleware AFTER Better Auth handler
+app.use(express.json());
+app.use('/api/v1/leaderboard', leaderboardRoutes);
+
+
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: [
+      "https://stroopy.vercel.app",
+      "http://localhost:5174",
+      "http://localhost:3000"
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
+mongoose.connect(process.env.MONGODB_URI!)
+  .then(() => console.log('✅ Mongoose connected to MongoDB'))
+  .catch((error) => console.error('❌ Mongoose connection error:', error));
+
 
 interface GameRoom {
     host: string;
@@ -56,55 +106,6 @@ const COLORS = {
 };
 
 const COLOR_NAMES = Object.keys(COLORS);
-
-const app = express();
-const PORT = 3000;
-
-// Configure CORS middleware as recommended by Better Auth
-app.use(
-  cors({
-    origin: [
-      "https://stroopy.vercel.app",
-      "http://localhost:5174",
-      "http://localhost:3000"
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
-  
-// Middleware
-app.use(cookieParser());
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// Routes - Better Auth handler FIRST (before express.json())
-app.all("/api/auth/*", toNodeHandler(auth));
-
-// Mount express json middleware AFTER Better Auth handler
-app.use(express.json());
-app.use('/api/v1/leaderboard', leaderboardRoutes);
-
-
-const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: [
-      "https://stroopy.vercel.app",
-      "http://localhost:5174",
-      "http://localhost:3000"
-    ],
-    methods: ["GET", "POST"],
-    credentials: true
-  }
-});
-
-mongoose.connect(process.env.MONGODB_URI!)
-  .then(() => console.log('✅ Mongoose connected to MongoDB'))
-  .catch((error) => console.error('❌ Mongoose connection error:', error));
 
 // Store active game rooms
 const gameRooms = new Map<string, GameRoom>();

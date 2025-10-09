@@ -12,7 +12,7 @@ const Home = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const { data: session, isPending } = useSession();
-
+ 
     useEffect(() => {
         document.title = "Stroopy - Stroop Effect Game"
     })
