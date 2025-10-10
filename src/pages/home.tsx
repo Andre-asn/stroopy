@@ -12,25 +12,8 @@ const Home = () => {
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showLeaderboard, setShowLeaderboard] = useState(false);
 
-    // ✅ Slightly improved session handling
-    const { data: session, isPending, refetch } = useSession();
-    const [loading, setLoading] = useState(true);
-    const [userSession, setUserSession] = useState(session);
-
-    useEffect(() => {
-        // Once useSession finishes loading, update local state
-        if (!isPending) {
-            setUserSession(session || null);
-            setLoading(false);
-        } else {
-            // failsafe: if pending too long, force recheck
-            const timeout = setTimeout(() => {
-                refetch?.();
-                setLoading(false);
-            }, 2000);
-            return () => clearTimeout(timeout);
-        }
-    }, [isPending, session, refetch]);
+    // Simplified session handling
+    const { data: session, isPending } = useSession();
 
     useEffect(() => {
         document.title = "Stroopy - Stroop Effect Game"
@@ -76,12 +59,12 @@ const Home = () => {
 
             {/* User Authentication Section */}
             <div className="z-10 mb-4 sm:mb-6">
-                {loading ? (
+                {isPending ? (
                     <p className="text-gray-400 text-sm animate-pulse">Loading...</p>
-                ) : userSession ? (
+                ) : session ? (
                     <div className="flex items-center gap-4 text-black">
                         <span className="text-white text-sm sm:text-base">
-                            Welcome, {userSession.user.name}!
+                            Welcome, {session.user.name}!
                         </span>
                         <Button
                             onClick={handleLogout}
@@ -150,7 +133,14 @@ const Home = () => {
                 </p>
             </div>
 
-            <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+            <AuthModal 
+                isOpen={showAuthModal} 
+                onClose={() => setShowAuthModal(false)}
+                onSuccess={() => {
+                    setShowAuthModal(false);
+                    // Session will automatically update via useSession hook
+                }}
+            />
             <Leaderboard isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
         </div>
     );
