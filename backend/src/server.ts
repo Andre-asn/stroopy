@@ -12,6 +12,7 @@ import leaderboardRoutes from './routes/leaderboard.js';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 app.use(
