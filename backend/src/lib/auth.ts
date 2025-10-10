@@ -7,6 +7,14 @@ export const auth = betterAuth({
   emailAndPassword: { 
     enabled: true, 
   },
+  // Ensure cookies work cross-site (Vercel frontend -> Azure backend)
+  advanced: {
+    useSecureCookies: true,
+    defaultCookieAttributes: {
+      sameSite: "none", // required for cross-site cookies
+      path: "/",
+    },
+  },
   trustedOrigins: [
     "https://stroopy.vercel.app",
     "http://localhost:5173",
