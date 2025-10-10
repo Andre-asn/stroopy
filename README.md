@@ -5,7 +5,7 @@ A real-time multiplayer game based on the Stroop Effect, built with React, TypeS
 ## Features
 
 - **Real-time multiplayer gameplay** with WebSocket-powered live interactions
-- **User authentication system** with JWT-based security
+- **User authentication system** with Better-Auth
 - **Global leaderboards** with Redis caching for performance
 - **Tug-of-war scoring system** for competitive 1v1 matches
 - **Single-player practice mode** for skill development
@@ -31,7 +31,7 @@ In multiplayer mode, players compete to capture territory using a 14-square tug-
 - Socket.IO for WebSocket connections
 - MongoDB with Mongoose ODM
 - Redis for caching and session management
-- JWT authentication with bcrypt password hashing
+- Better-Auth
 - TypeScript throughout
 
 ### Infrastructure
@@ -39,17 +39,3 @@ In multiplayer mode, players compete to capture territory using a 14-square tug-
 - Backend deployed on Azure App Service
 - Azure Cosmos DB (MongoDB API) for data persistence
 - Redis for high-performance caching
-
-## Architecture
-
-The application uses a client-server architecture with real-time bidirectional communication. The backend manages game state, user authentication, and leaderboard calculations while the frontend handles game rendering and user interactions.
-
-Key architectural decisions include:
-- Redis caching layer for leaderboard performance
-- JWT stateless authentication for scalability  
-- Socket.IO rooms for isolated multiplayer sessions
-- MongoDB for flexible user and game data storage
-
-## Live Demo
-
-[https://stroopy.vercel.app](https://stroopy.vercel.app)
