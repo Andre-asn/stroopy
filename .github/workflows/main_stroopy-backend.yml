@@ -70,4 +70,4 @@ jobs:
         with:
           app-name: 'stroopy-backend'
           slot-name: 'Production'
-          package: backend       # ✅ Deploy only the built backend folder
+          package: .       # ✅ Deploy the entire downloaded artifact (which is the backend folder)
