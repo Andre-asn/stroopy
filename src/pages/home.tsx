@@ -13,7 +13,7 @@ const Home = () => {
     const [showLeaderboard, setShowLeaderboard] = useState(false);
 
     // Simplified session handling
-    const { data: session, isPending } = useSession();
+    const { data: session, isPending, refetch } = useSession();
 
     useEffect(() => {
         document.title = "Stroopy - Stroop Effect Game"
@@ -138,7 +138,10 @@ const Home = () => {
                 onClose={() => setShowAuthModal(false)}
                 onSuccess={() => {
                     setShowAuthModal(false);
-                    // Session will automatically update via useSession hook
+                    // Force session refresh after successful authentication
+                    setTimeout(() => {
+                        refetch();
+                    }, 100);
                 }}
             />
             <Leaderboard isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
