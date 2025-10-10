@@ -11,14 +11,33 @@ const Home = () => {
     const [titleColor, setTitleColor] = useState('#FFFFFF');
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showLeaderboard, setShowLeaderboard] = useState(false);
-    const { data: session, isPending } = useSession();
- 
+
+    // ✅ Slightly improved session handling
+    const { data: session, isPending, refetch } = useSession();
+    const [loading, setLoading] = useState(true);
+    const [userSession, setUserSession] = useState(session);
+
+    useEffect(() => {
+        // Once useSession finishes loading, update local state
+        if (!isPending) {
+            setUserSession(session || null);
+            setLoading(false);
+        } else {
+            // failsafe: if pending too long, force recheck
+            const timeout = setTimeout(() => {
+                refetch?.();
+                setLoading(false);
+            }, 2000);
+            return () => clearTimeout(timeout);
+        }
+    }, [isPending, session, refetch]);
+
     useEffect(() => {
         document.title = "Stroopy - Stroop Effect Game"
-    })
+    });
 
     const getRandomColor = () => {
-        return `#${Math.floor(Math.random()*16777215).toString(16)}`;
+        return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
     };
 
     useEffect(() => {
@@ -34,15 +53,15 @@ const Home = () => {
 
     const handleVersus = () => {
         navigate('/Versus');
-    }
+    };
 
     const handleHowTo = () => {
         navigate('/HowTo');
-    }
+    };
 
     const handleLogout = async () => {
         await signOut();
-    }
+    };
 
     return (
         <div className="relative overflow-hidden min-h-screen flex flex-col items-center justify-center bg-black p-4">
@@ -57,20 +76,22 @@ const Home = () => {
 
             {/* User Authentication Section */}
             <div className="z-10 mb-4 sm:mb-6">
-                {isPending ? (
-                        <p className="text-gray-400 text-sm">Loading...</p>
-                    ) : session ? (
-                        <div className="flex items-center gap-4 text-black">
-                            <span className="text-white text-sm sm:text-base">Welcome, {session.user.name}!</span>
-                            <Button
-                                onClick={handleLogout}
-                                variant="outline"
-                                size="sm"
-                                className="text-xs sm:text-sm"
-                            >
-                                Logout
-                            </Button>
-                        </div>
+                {loading ? (
+                    <p className="text-gray-400 text-sm animate-pulse">Loading...</p>
+                ) : userSession ? (
+                    <div className="flex items-center gap-4 text-black">
+                        <span className="text-white text-sm sm:text-base">
+                            Welcome, {userSession.user.name}!
+                        </span>
+                        <Button
+                            onClick={handleLogout}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs sm:text-sm"
+                        >
+                            Logout
+                        </Button>
+                    </div>
                 ) : (
                     <Button
                         onClick={() => setShowAuthModal(true)}
@@ -82,7 +103,8 @@ const Home = () => {
                     </Button>
                 )}
             </div>
-            <div className="inline-flex gap-2 sm:gap-4 z-10"> 
+
+            <div className="inline-flex gap-2 sm:gap-4 z-10">
                 <Button
                     className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-green-700"
                     size="lg"
@@ -116,20 +138,22 @@ const Home = () => {
             <div className="absolute bottom-8 sm:bottom-14 text-center text-gray-500 text-xs z-10">
                 <p>Stroopy v0.7</p>
                 <p>Created by [Andre Santiago-Neyra]</p>
-                <p><a href="https://github.com/Andre-asn" className="hover:text-gray-300 underline" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+                <p>
+                    <a
+                        href="https://github.com/Andre-asn"
+                        className="hover:text-gray-300 underline"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        GitHub
+                    </a>
+                </p>
             </div>
 
-            <AuthModal 
-                isOpen={showAuthModal}
-                onClose={() => setShowAuthModal(false)}
-            />
-
-            <Leaderboard 
-                isOpen={showLeaderboard}
-                onClose={() => setShowLeaderboard(false)}
-            />
+            <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+            <Leaderboard isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
         </div>
     );
 };
 
-export default Home; 
+export default Home;
