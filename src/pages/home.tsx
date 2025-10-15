@@ -11,6 +11,7 @@ const Home = () => {
     const [titleColor, setTitleColor] = useState('#FFFFFF');
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showLeaderboard, setShowLeaderboard] = useState(false);
+    const maintenanceActive = true; // Temporarily disable auth & leaderboard during backend migration
 
     // Simplified session handling
     const { data: session, isPending, refetch } = useSession();
@@ -57,6 +58,15 @@ const Home = () => {
                 Stroopy
             </h1>
 
+            {/* Maintenance Notice */}
+            {maintenanceActive && (
+                <div className="z-10 mb-4 sm:mb-6 max-w-md w-full">
+                    <div className="bg-yellow-200/90 border border-yellow-500 text-yellow-900 p-3 rounded text-sm text-center">
+                        We're migrating our backend to GCP/MongoDB Atlas. Auth and leaderboard are temporarily disabled.
+                    </div>
+                </div>
+            )}
+
             {/* User Authentication Section */}
             <div className="z-10 mb-4 sm:mb-6">
                 {isPending ? (
@@ -77,10 +87,12 @@ const Home = () => {
                     </div>
                 ) : (
                     <Button
-                        onClick={() => setShowAuthModal(true)}
+                        onClick={() => undefined}
                         variant="outline"
                         size="sm"
-                        className="text-xs sm:text-sm text-black border-white hover:bg-white hover:text-black"
+                        className="text-xs sm:text-sm text-black border-white"
+                        disabled={maintenanceActive}
+                        title={maintenanceActive ? 'Temporarily disabled during backend migration' : undefined}
                     >
                         Sign Up / Sign In
                     </Button>
@@ -110,9 +122,11 @@ const Home = () => {
                     ?
                 </Button>
                 <Button
-                    className="justify-between z-10 text-base sm:text-xl bg-white text-black hover:bg-purple-600"
+                    className="justify-between z-10 text-base sm:text-xl bg-white text-black"
                     size="lg"
-                    onClick={() => setShowLeaderboard(true)}
+                    onClick={() => undefined}
+                    disabled={maintenanceActive}
+                    title={maintenanceActive ? 'Temporarily disabled during backend migration' : undefined}
                 >
                     🏆
                 </Button>
@@ -133,18 +147,22 @@ const Home = () => {
                 </p>
             </div>
 
-            <AuthModal 
-                isOpen={showAuthModal} 
-                onClose={() => setShowAuthModal(false)}
-                onSuccess={() => {
-                    setShowAuthModal(false);
-                    // Force session refresh after successful authentication
-                    setTimeout(() => {
-                        refetch();
-                    }, 100);
-                }}
-            />
-            <Leaderboard isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
+            {!maintenanceActive && (
+                <AuthModal 
+                    isOpen={showAuthModal} 
+                    onClose={() => setShowAuthModal(false)}
+                    onSuccess={() => {
+                        setShowAuthModal(false);
+                        // Force session refresh after successful authentication
+                        setTimeout(() => {
+                            refetch();
+                        }, 100);
+                    }}
+                />
+            )}
+            {!maintenanceActive && (
+                <Leaderboard isOpen={showLeaderboard} onClose={() => setShowLeaderboard(false)} />
+            )}
         </div>
     );
 };

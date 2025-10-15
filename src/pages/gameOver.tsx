@@ -35,7 +35,8 @@ const GameOver = () => {
     const location = useLocation();
     const state = location.state as GameOverState;
     const [showSubmissionModal, setShowSubmissionModal] = useState(false);
-    const [scoreSubmitted, setScoreSubmitted] = useState(false);
+    const maintenanceActive = true; // Temporarily disable leaderboard submission during backend migration
+    const [, setScoreSubmitted] = useState(false); // kept for future use after maintenance
 
     useEffect(() => {
         // Only handle multiplayer socket logic
@@ -108,15 +109,12 @@ const GameOver = () => {
 
                     <div className="flex flex-col gap-3 sm:gap-4 w-full">
                         <Button
-                            onClick={() => setShowSubmissionModal(true)}
-                            disabled={scoreSubmitted}
-                            className={`w-full text-sm sm:text-base font-bold ${
-                                scoreSubmitted 
-                                    ? 'bg-green-600 cursor-not-allowed' 
-                                    : 'bg-purple-600 hover:bg-purple-700'
-                            }`}
+                            onClick={() => undefined}
+                            disabled={true}
+                            className={`w-full text-sm sm:text-base font-bold bg-gray-600 cursor-not-allowed`}
+                            title={maintenanceActive ? 'Temporarily disabled during backend migration' : undefined}
                         >
-                            {scoreSubmitted ? '✅ Score Submitted!' : '🏆 Submit to Leaderboard'}
+                            🏆 Submit to Leaderboard
                         </Button>
                         
                         <Button
@@ -136,16 +134,18 @@ const GameOver = () => {
                 </div>
 
                 {/* Leaderboard Submission Modal for Singleplayer */}
-                <LeaderboardSubmissionModal
-                    isOpen={showSubmissionModal}
-                    onClose={() => setShowSubmissionModal(false)}
-                    score={14} // Perfect score for completing the game
-                    timeInMilliseconds={state.completionTime}
-                    onSuccess={() => {
-                        setScoreSubmitted(true);
-                        setShowSubmissionModal(false);
-                    }}
-                />
+                {!maintenanceActive && (
+                    <LeaderboardSubmissionModal
+                        isOpen={showSubmissionModal}
+                        onClose={() => setShowSubmissionModal(false)}
+                        score={14} // Perfect score for completing the game
+                        timeInMilliseconds={state.completionTime}
+                        onSuccess={() => {
+                            setScoreSubmitted(true);
+                            setShowSubmissionModal(false);
+                        }}
+                    />
+                )}
             </div>
         );
     }
