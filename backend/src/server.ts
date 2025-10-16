@@ -61,10 +61,19 @@ const io = new Server(httpServer, {
   }
 });
 
+httpServer.listen(PORT, () => {
+    console.log(`Stroopy powered by Better Auth listening on port ${PORT}`);
+  });
+
 mongoose.connect(process.env.MONGODB_URI!)
   .then(() => console.log('✅ Mongoose connected to MongoDB'))
   .catch((error) => console.error('❌ Mongoose connection error:', error));
 
+// Error handling for server
+httpServer.on('error', (error) => {
+    console.error('❌ Server error:', error);
+    process.exit(1);
+  });
 
 interface GameRoom {
     host: string;
@@ -550,8 +559,4 @@ io.on('connection', (socket: Socket) => {
         }
     }
   });
-});
-
-httpServer.listen(PORT, () => {
-  console.log(`Stroopy powered by Better Auth listening on port ${PORT}`);
 });

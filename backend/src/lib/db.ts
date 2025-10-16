@@ -33,7 +33,7 @@ if (process.env.NODE_ENV === "development") {
 
 // Connect and export
 await client.connect();
-console.log('Successfully connected to Azure Cosmos DB');
+console.log('Successfully connected to MongoDB Atlas');
 
 export const db = client.db();
 export default client;
