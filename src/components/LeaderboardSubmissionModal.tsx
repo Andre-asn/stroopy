@@ -23,8 +23,7 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
 	const [submitted, setSubmitted] = useState(false);
-	const { data: session } = useSession();
-	const maintenanceActive = true; // Temporarily disable submission/auth during backend migration
+    const { data: session } = useSession();
 
 	// Get backend URL
 	const getBackendUrl = () => {
@@ -89,25 +88,6 @@ const LeaderboardSubmissionModal: React.FC<LeaderboardSubmissionModalProps> = ({
 	};
 
 	if (!isOpen) return null;
-
-	if (maintenanceActive) {
-		return (
-			<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-				<div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-					<div className="flex justify-between items-center mb-4">
-						<h2 className="text-2xl font-bold">Submit to Leaderboard</h2>
-						<button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl">×</button>
-					</div>
-					<div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded">
-						We're migrating our backend to GCP/MongoDB Atlas. Auth and leaderboard are temporarily disabled.
-					</div>
-					<div className="mt-4 text-right">
-						<Button onClick={onClose}>Close</Button>
-					</div>
-				</div>
-			</div>
-		);
-	}
 
 	if (success) {
 		return (
