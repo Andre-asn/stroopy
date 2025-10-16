@@ -1,15 +1,15 @@
 import Redis from 'ioredis';
 
-// Redis connection
+// Redis connection with proper Upstash support
 export const redis = new Redis({
 	host: process.env.REDIS_HOST || 'localhost',
 	port: parseInt(process.env.REDIS_PORT || '6379'),
 	password: process.env.REDIS_PASSWORD || undefined,
 	maxRetriesPerRequest: 3,
 	lazyConnect: true,
-	tls: process.env.REDIS_HOST?.includes('cache.windows.net') ? {
+	tls: {
 		servername: process.env.REDIS_HOST
-	} : undefined
+	}
 });
 
 redis.on('connect', () => {
@@ -17,7 +17,7 @@ redis.on('connect', () => {
 });
 
 redis.on('error', (error) => {
-	console.warn('⚠️ Redis connection error:', error);
+	console.warn('⚠️ Redis connection error:', error.message);
 	console.warn('⚠️ Application will continue without Redis caching');
 });
 
@@ -32,6 +32,11 @@ redis.on('reconnecting', () => {
 // Graceful shutdown
 process.on('SIGINT', async () => {
 	await redis.disconnect();
-	console.log('Database connections closed');
+	console.log('Redis connection closed');
 	process.exit(0);
+});
+
+// Don't let Redis errors crash the app
+redis.on('error', () => {
+	// Already logged above, just prevent unhandled rejection
 });
