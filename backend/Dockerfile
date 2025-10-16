@@ -1,18 +1,19 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+COPY package*.json tsconfig.json ./
+COPY src ./src
+ 
+RUN npm ci
+RUN npm run build
+
 FROM node:20-alpine
 
 WORKDIR /app
-
 COPY package*.json ./
-COPY tsconfig.json ./
+RUN npm ci --omit=dev
 
-RUN npm ci
-
-# Copy source code
-COPY src/ ./src/
-
-RUN npm run build
-
-RUN npm prune --production
+COPY --from=builder /app/dist ./dist
 
 ENV PORT=8080
 EXPOSE 8080
