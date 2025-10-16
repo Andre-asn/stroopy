@@ -5,7 +5,7 @@ import { Server, Socket } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
-import mongoose from 'mongoose';
+import { connectToMongoDB } from './lib/db.js';
 import leaderboardRoutes from './routes/leaderboard.js';
 
 // Load environment variables
@@ -61,22 +61,15 @@ const io = new Server(httpServer, {
   }
 });
 
-async function startServer() {
-    try {
-      await mongoose.connect(process.env.MONGODB_URI!);
-      console.log('✅ Mongoose connected to MongoDB');
-      httpServer.listen(PORT, () => {
-        console.log(`🚀 Stroopy listening on port ${PORT}`);
-      });
-    } catch (err) {
-      console.error('❌ Failed to start server:', err);
-      process.exit(1);
-    }
-  }
-  
-  startServer();
-  
-
+// ✅ START SERVER FIRST - Critical for Cloud Run!
+httpServer.listen(PORT, () => {
+    console.log(`✅ Server listening on port ${PORT}`);
+    
+    // THEN connect to MongoDB (non-blocking)
+    connectToMongoDB()
+      .then(() => console.log('✅ MongoDB ready for Better Auth'))
+      .catch((error) => console.error('❌ MongoDB connection error:', error));
+  });
 
 interface GameRoom {
     host: string;

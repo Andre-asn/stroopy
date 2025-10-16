@@ -1,39 +1,30 @@
-import { MongoClient } from 'mongodb';
+import { MongoClient, ServerApiVersion } from 'mongodb';
 
-if (!process.env.MONGODB_URI) {
-  throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
-}
+const uri = process.env.MONGODB_URI!;
 
-const uri = process.env.MONGODB_URI;
-
-// Cosmos DB for MongoDB API configuration
-const options = {
-  ssl: true,
-  retryWrites: false,
-  maxIdleTimeMS: 120000,
-  appName: 'stroopy-backend',
-  directConnection: false,
-};
-
-let client: MongoClient;
-
-if (process.env.NODE_ENV === "development") {
-  let globalWithMongo = global as typeof globalThis & {
-    _mongoClient?: MongoClient;
-  };
-
-  if (!globalWithMongo._mongoClient) {
-    console.log('Creating new MongoDB client connection...');
-    globalWithMongo._mongoClient = new MongoClient(uri, options);
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
   }
-  client = globalWithMongo._mongoClient;
-} else {
-  client = new MongoClient(uri, options);
+});
+
+async function connectToMongoDB() {
+  try {
+    await client.connect();
+    await client.db("admin").command({ ping: 1 });
+    console.log("✅ MongoDB connected successfully!");
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error);
+    throw error;
+  }
 }
 
-// Connect and export
-await client.connect();
-console.log('Successfully connected to MongoDB Atlas');
-
-export const db = client.db();
 export default client;
+export { connectToMongoDB };
+
+process.on('SIGTERM', async () => {
+  await client.close();
+  console.log('MongoDB connection closed');
+});
