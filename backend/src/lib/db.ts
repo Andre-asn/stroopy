@@ -2,29 +2,41 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 
 const uri = process.env.MONGODB_URI!;
 
-const client = new MongoClient(uri, {
+// Create a single MongoClient instance for the application lifetime
+export const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
+  maxPoolSize: 10,
+  minPoolSize: 2,
+  connectTimeoutMS: 30000,
+  socketTimeoutMS: 30000,
 });
 
-async function connectToMongoDB() {
+// Connect to MongoDB once
+export async function connectToMongoDB() {
   try {
+    console.log('🔄 Connecting to MongoDB...');
     await client.connect();
     await client.db("admin").command({ ping: 1 });
-    console.log("✅ MongoDB connected successfully!");
+    console.log("✅ Successfully connected to MongoDB!");
+    return client;
   } catch (error) {
     console.error("❌ MongoDB connection error:", error);
     throw error;
   }
 }
 
-export default client;
-export { connectToMongoDB };
-
+// Graceful shutdown
 process.on('SIGTERM', async () => {
-  await client.close();
-  console.log('MongoDB connection closed');
+  try {
+    await client.close();
+    console.log('MongoDB connection closed');
+  } catch (error) {
+    console.error('Error closing MongoDB:', error);
+  }
 });
+
+export default client;
