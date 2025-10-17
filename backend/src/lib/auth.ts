@@ -3,7 +3,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import client from "./db.js";
 
 export const auth = betterAuth({
-  database: mongodbAdapter(client.db("local")),
+  database: mongodbAdapter(client.db("backend")),
   emailAndPassword: { 
     enabled: true, 
   },
