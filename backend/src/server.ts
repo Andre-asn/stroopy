@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { connectToMongoDB } from './lib/db.js';
 import leaderboardRoutes from './routes/leaderboard.js';
+import mongoose from 'mongoose';
 
 // Load environment variables
 dotenv.config();
@@ -69,7 +70,12 @@ httpServer.listen(PORT, () => {
     connectToMongoDB()
       .then(() => console.log('✅ MongoDB ready for Better Auth'))
       .catch((error) => console.error('❌ MongoDB connection error:', error));
+
+    mongoose.connect(process.env.MONGODB_URI!)
+      .then(() => console.log('✅ Mongoose connected for leaderboard'))
+      .catch((error) => console.error('❌ Mongoose connection failed:', error));
   });
+
 
 interface GameRoom {
     host: string;
