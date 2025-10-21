@@ -22,7 +22,9 @@ app.use(
         "https://stroopy.vercel.app",
         "http://localhost:5173",
         "http://localhost:5174",
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "https://www.stroopy.app",
+        "https://stroopy.app",
       ],
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
@@ -55,7 +57,9 @@ const io = new Server(httpServer, {
       "https://stroopy.vercel.app",
       "http://localhost:5173",
       "http://localhost:5174",
-      "http://localhost:3000"
+      "http://localhost:3000",
+      "https://www.stroopy.app",
+      "https://stroopy.app",
     ],
     methods: ["GET", "POST"],
     credentials: true
